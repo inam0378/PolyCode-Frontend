@@ -50,7 +50,7 @@ export default function LanguageSelectPage({ onLanguageSelect }) {
     
     setTimeout(() => {
       onLanguageSelect(language);
-      navigate('/');
+      navigate('/hub');
     }, 300);
   };
 

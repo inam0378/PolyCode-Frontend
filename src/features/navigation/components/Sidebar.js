@@ -115,7 +115,11 @@ const SidebarTreeNode = memo(function SidebarTreeNode({
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 export default function Sidebar({
-  isOpen, onClose, selectedLanguage, onLanguageSelect,
+  isOpen,
+  onClose,
+  selectedLanguage,
+  onLanguageSelect,
+  onGoToStackPicker,
 }) {
   const [tree, setTree] = useState([]);
   const [languages, setLanguages] = useState([]);
@@ -198,6 +202,20 @@ export default function Sidebar({
                 <div className="lang-option" style={{ opacity: 0.5 }}>No languages found</div>
               )}
             </div>
+          )}
+
+          {onGoToStackPicker && (
+            <button
+              type="button"
+              className="change-stack-btn"
+              onClick={() => {
+                setShowLangMenu(false);
+                onGoToStackPicker();
+                onClose();
+              }}
+            >
+              View all stacks
+            </button>
           )}
         </div>
       </div>

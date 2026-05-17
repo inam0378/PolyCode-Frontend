@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
 import Navbar from "./features/navigation/components/Navbar";
 import Sidebar from "./features/navigation/components/Sidebar";
@@ -11,7 +12,6 @@ import { PlaygroundProvider } from "./features/playground/context/PlaygroundCont
 import { AuthProvider } from "./features/auth/context/AuthContext";
 import "./App.css";
 
-// ── Lazy-load every page ──────────────────────────────────────────────────────
 const LanguageSelectPage = lazy(
   () => import("./features/language/pages/LanguageSelectPage"),
 );
@@ -33,22 +33,105 @@ const PageFallback = () => (
   </div>
 );
 
-function App() {
+function MainApp({
+  selectedLanguage,
+  onLanguageSelect,
+  onGoToStackPicker,
+  theme,
+  onToggleTheme,
+}) {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
-  const [selectedLanguage, setSelectedLanguage] = React.useState(
-    () => localStorage.getItem("selectedLanguage") || null,
+  const toggleSidebar = () => setIsSidebarOpen((o) => !o);
+  const closeSidebar = () => setIsSidebarOpen(false);
+
+  return (
+    <>
+      <Navbar
+        toggleSidebar={toggleSidebar}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        onGoToStackPicker={onGoToStackPicker}
+      />
+      <div className="layout">
+        {isSidebarOpen && (
+          <div className="backdrop" onClick={closeSidebar} />
+        )}
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={closeSidebar}
+          selectedLanguage={selectedLanguage}
+          onLanguageSelect={onLanguageSelect}
+          onGoToStackPicker={onGoToStackPicker}
+        />
+        <main className="main-content">
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/hub" replace />} />
+              <Route
+                path="/hub"
+                element={<HomePage selectedLanguage={selectedLanguage} />}
+              />
+              <Route
+                path="/doc/*"
+                element={
+                  <DocumentPage
+                    selectedLanguage={selectedLanguage}
+                    theme={theme}
+                  />
+                }
+              />
+              <Route
+                path="/category/*"
+                element={
+                  <CategoryPage selectedLanguage={selectedLanguage} />
+                }
+              />
+              <Route
+                path="/search"
+                element={<SearchPage selectedLanguage={selectedLanguage} />}
+              />
+              <Route
+                path="/playground"
+                element={
+                  <PlaygroundPage
+                    theme={theme}
+                    onToggleSidebar={toggleSidebar}
+                    sidebarOpen={isSidebarOpen}
+                  />
+                }
+              />
+              <Route path="*" element={<Navigate to="/hub" replace />} />
+            </Routes>
+          </Suspense>
+        </main>
+      </div>
+    </>
   );
+}
+
+function AppRoutes() {
+  const navigate = useNavigate();
+  const [selectedLanguage, setSelectedLanguage] = React.useState(null);
   const [theme, setTheme] = React.useState(
     () => localStorage.getItem("theme") || "dark",
   );
 
-  const toggleSidebar = () => setIsSidebarOpen((o) => !o);
-  const closeSidebar = () => setIsSidebarOpen(false);
+  React.useEffect(() => {
+    localStorage.removeItem("selectedLanguage");
+    sessionStorage.removeItem("selectedLanguage");
+  }, []);
 
-  const handleLanguageSelect = (language) => {
-    localStorage.setItem("selectedLanguage", language);
-    setSelectedLanguage(language);
-  };
+  const handleLanguageSelect = React.useCallback(
+    (language) => {
+      setSelectedLanguage(language);
+      navigate("/hub", { replace: true });
+    },
+    [navigate],
+  );
+
+  const goToStackPicker = React.useCallback(() => {
+    navigate("/select-language");
+  }, [navigate]);
 
   const toggleTheme = React.useCallback(() => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
@@ -61,118 +144,45 @@ function App() {
   }, [theme]);
 
   return (
+    <div className={`app ${theme === "light" ? "theme-light" : ""}`}>
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route
+            path="/select-language"
+            element={
+              <LanguageSelectPage onLanguageSelect={handleLanguageSelect} />
+            }
+          />
+          <Route
+            path="/*"
+            element={
+              selectedLanguage ? (
+                <MainApp
+                  selectedLanguage={selectedLanguage}
+                  onLanguageSelect={handleLanguageSelect}
+                  onGoToStackPicker={goToStackPicker}
+                  theme={theme}
+                  onToggleTheme={toggleTheme}
+                />
+              ) : (
+                <Navigate to="/select-language" replace />
+              )
+            }
+          />
+        </Routes>
+      </Suspense>
+    </div>
+  );
+}
+
+function App() {
+  return (
     <AuthProvider>
       <PlaygroundProvider>
         <Router>
-          <div className={`app ${theme === "light" ? "theme-light" : ""}`}>
-            <Suspense fallback={<PageFallback />}>
-              <Routes>
-                {/* ── Auth routes (no navbar/sidebar) ── */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
-
-                {/* ── Language selector (no navbar/sidebar) ── */}
-                <Route
-                  path="/select-language"
-                  element={
-                    <LanguageSelectPage
-                      onLanguageSelect={handleLanguageSelect}
-                    />
-                  }
-                />
-
-                {/* ── Main app with navbar + sidebar ── */}
-                <Route
-                  path="/*"
-                  element={
-                    <>
-                      <Navbar
-                        toggleSidebar={toggleSidebar}
-                        theme={theme}
-                        onToggleTheme={toggleTheme}
-                      />
-                      <div className="layout">
-                        {isSidebarOpen && (
-                          <div className="backdrop" onClick={closeSidebar} />
-                        )}
-                        <Sidebar
-                          isOpen={isSidebarOpen}
-                          onClose={closeSidebar}
-                          selectedLanguage={selectedLanguage}
-                          onLanguageSelect={handleLanguageSelect}
-                        />
-                        <main className="main-content">
-                          <Routes>
-                            {/* Redirect root to language picker if no language selected */}
-                            <Route
-                              path="/"
-                              element={
-                                selectedLanguage ? (
-                                  <HomePage
-                                    selectedLanguage={selectedLanguage}
-                                  />
-                                ) : (
-                                  <Navigate to="/select-language" replace />
-                                )
-                              }
-                            />
-                            <Route
-                              path="/hub"
-                              element={
-                                selectedLanguage ? (
-                                  <HomePage
-                                    selectedLanguage={selectedLanguage}
-                                  />
-                                ) : (
-                                  <Navigate to="/select-language" replace />
-                                )
-                              }
-                            />
-                            <Route
-                              path="/doc/*"
-                              element={
-                                <DocumentPage
-                                  selectedLanguage={selectedLanguage}
-                                  theme={theme}
-                                />
-                              }
-                            />
-                            <Route
-                              path="/category/*"
-                              element={
-                                <CategoryPage
-                                  selectedLanguage={selectedLanguage}
-                                />
-                              }
-                            />
-                            <Route
-                              path="/search"
-                              element={
-                                <SearchPage
-                                  selectedLanguage={selectedLanguage}
-                                />
-                              }
-                            />
-                            <Route
-                              path="/playground"
-                              element={
-                                <PlaygroundPage
-                                  theme={theme}
-                                  onToggleSidebar={toggleSidebar}
-                                  sidebarOpen={isSidebarOpen}
-                                />
-                              }
-                            />
-                            <Route path="*" element={<Navigate to="/" />} />
-                          </Routes>
-                        </main>
-                      </div>
-                    </>
-                  }
-                />
-              </Routes>
-            </Suspense>
-          </div>
+          <AppRoutes />
         </Router>
       </PlaygroundProvider>
     </AuthProvider>

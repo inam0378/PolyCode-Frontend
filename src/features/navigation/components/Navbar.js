@@ -6,6 +6,7 @@ export default function Navbar({
   toggleSidebar,
   theme = "dark",
   onToggleTheme,
+  onGoToStackPicker,
 }) {
   const { user, logout } = useAuth();
   const [query, setQuery] = useState("");
@@ -102,6 +103,17 @@ export default function Navbar({
         >
           ▶ Playground
         </NavLink>
+
+        {onGoToStackPicker && (
+          <button
+            type="button"
+            className="navbar-change-stack-btn"
+            onClick={onGoToStackPicker}
+            title="Return to language selection"
+          >
+            ⇄ Change stack
+          </button>
+        )}
 
         <button
           type="button"

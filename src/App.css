@@ -532,6 +532,48 @@ body {
   color: var(--acid);
 }
 
+.change-stack-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--txt-2);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.change-stack-btn:hover {
+  border-color: var(--acid);
+  color: var(--acid);
+  background: var(--acid-dim);
+}
+
+.navbar-change-stack-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--txt-1);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navbar-change-stack-btn:hover {
+  background: var(--acid-dim);
+  color: var(--acid);
+  border-color: var(--acid);
+}
+
 .current-lang-info {
   display: flex;
   align-items: center;
