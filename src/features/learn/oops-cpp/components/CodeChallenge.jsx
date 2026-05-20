@@ -25,6 +25,8 @@ export default function CodeChallenge({
   const monacoRef = useRef(null);
   const fixedSelectionDecorationRef = useRef([]);
   const fixedSelectionRangeRef = useRef(null);
+  const apiBase = (process.env.REACT_APP_API_URL || "http://localhost:5000/api")
+    .replace(/\/$/, "");
 
   useEffect(() => {
     const challengeChanged = activeChallengeId.current !== challenge.id;
@@ -46,8 +48,9 @@ export default function CodeChallenge({
     }
   }, [challenge.id, challenge.starterCode, initialCode]);
 
-  // Simulated test runner — checks code string heuristically
-  // In production: hook into your backend compiler (BrowserExecutor / Piston API)
+  // Lesson runner: use the backend compiler when available, then run the
+  // challenge-specific acceptance checks. The local diagnostics keep broken
+  // C++ from passing silently if the compiler API is down.
   function runTests() {
     if (running || showSolution) return;
 
@@ -59,7 +62,93 @@ export default function CodeChallenge({
       expected: simulateCppOutput(challenge.solutionCode),
     });
 
-    setTimeout(() => {
+    setTimeout(async () => {
+      const expectedOutput = simulateCppOutput(challenge.solutionCode);
+      const diagnostics = getCppDiagnostics(code);
+
+      if (diagnostics.length) {
+        const failedTests = challenge.tests.map((test) => ({
+          ...test,
+          passed: false,
+        }));
+        setResults({
+          passed: false,
+          tests: [
+            {
+              id: "compile",
+              label: "C++ compiles before acceptance tests",
+              passed: false,
+              hint: diagnostics[0],
+            },
+            ...failedTests,
+          ],
+        });
+        setOutput({
+          status: "fail",
+          stdout: diagnostics.join("\n"),
+          expected: expectedOutput,
+        });
+        setRunning(false);
+        return;
+      }
+
+      let compilerResult = null;
+      let compilerUnavailable = false;
+
+      try {
+        compilerResult = await runCppCodeRemotely(code);
+      } catch (error) {
+        compilerUnavailable = true;
+        console.warn("C++ compiler API unavailable, using local preview:", error);
+      }
+
+      if (compilerUnavailable) {
+        setResults({
+          passed: false,
+          tests: [
+            {
+              id: "compile",
+              label: "C++ compiler is reachable",
+              passed: false,
+              hint: "Start or deploy the backend compiler API.",
+            },
+            ...challenge.tests.map((test) => ({ ...test, passed: false })),
+          ],
+        });
+        setOutput({
+          status: "fail",
+          stdout:
+            "C++ compiler API is unavailable, so this challenge cannot be verified reliably.\nCheck REACT_APP_API_URL and make sure /api/challenges/run-cpp is deployed.",
+          expected: expectedOutput,
+        });
+        setRunning(false);
+        return;
+      }
+
+      const compilerError =
+        compilerResult?.error || compilerResult?.stderr || "";
+      if (compilerResult && (compilerResult.exitCode !== 0 || compilerError)) {
+        setResults({
+          passed: false,
+          tests: [
+            {
+              id: "compile",
+              label: "C++ compiles before acceptance tests",
+              passed: false,
+              hint: "Fix the compiler error shown in Output.",
+            },
+            ...challenge.tests.map((test) => ({ ...test, passed: false })),
+          ],
+        });
+        setOutput({
+          status: "fail",
+          stdout: compilerError || "Compilation failed.",
+          expected: expectedOutput,
+        });
+        setRunning(false);
+        return;
+      }
+
       const testResults = challenge.tests.map((test) => {
         // Heuristic checks based on solution keywords
         const solutionKeywords = extractKeywords(
@@ -79,15 +168,14 @@ export default function CodeChallenge({
 
       const allPassed = testResults.every((t) => t.passed);
       const simulatedOutput = simulateCppOutput(code);
-      const expectedOutput = simulateCppOutput(challenge.solutionCode);
       setResults({ passed: allPassed, tests: testResults });
+      const stdout =
+        compilerResult?.stdout?.trimEnd() ||
+        simulatedOutput ||
+        "Program ran, but no console output was produced.";
       setOutput({
         status: allPassed ? "pass" : "fail",
-        stdout:
-          (allPassed && expectedOutput ? expectedOutput : simulatedOutput) ||
-          (allPassed
-            ? expectedOutput
-            : "No console output detected yet. Add cout statements, then run again."),
+        stdout,
         expected: expectedOutput,
       });
       if (allPassed && !isCompleted) {
@@ -209,6 +297,156 @@ export default function CodeChallenge({
       default:
         return [];
     }
+  }
+
+  async function runCppCodeRemotely(source) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
+    try {
+      const response = await fetch(`${apiBase}/challenges/run-cpp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: source }),
+        signal: controller.signal,
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.message || payload.error || "Compiler API failed");
+      }
+      return payload;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  function getCppDiagnostics(source = "") {
+    const cleanSource = stripComments(source);
+    const diagnostics = [];
+    const balanceError = getBalanceError(cleanSource);
+    if (balanceError) diagnostics.push(balanceError);
+
+    if (!/\bint\s+main\s*\(/.test(cleanSource)) {
+      diagnostics.push("Missing int main(). Add a main function that runs your code.");
+    }
+
+    collectClassDiagnostics(cleanSource).forEach((message) => {
+      diagnostics.push(message);
+    });
+
+    collectStatementDiagnostics(cleanSource).forEach((message) => {
+      diagnostics.push(message);
+    });
+
+    return [...new Set(diagnostics)].slice(0, 5);
+  }
+
+  function getBalanceError(source) {
+    const pairs = { "(": ")", "{": "}", "[": "]" };
+    const opens = new Set(Object.keys(pairs));
+    const closes = new Set(Object.values(pairs));
+    const stack = [];
+    let quote = null;
+
+    for (let index = 0; index < source.length; index += 1) {
+      const char = source[index];
+      const previous = source[index - 1];
+
+      if ((char === '"' || char === "'") && previous !== "\\") {
+        quote = quote === char ? null : quote || char;
+      }
+      if (quote) continue;
+
+      if (opens.has(char)) {
+        stack.push({ char, index });
+      } else if (closes.has(char)) {
+        const last = stack.pop();
+        if (!last || pairs[last.char] !== char) {
+          return `Unexpected '${char}'. Check your brackets near character ${index + 1}.`;
+        }
+      }
+    }
+
+    const last = stack.pop();
+    return last
+      ? `Missing '${pairs[last.char]}' for '${last.char}'. Check your brackets.`
+      : "";
+  }
+
+  function collectClassDiagnostics(source) {
+    const diagnostics = [];
+    const classRegex = /class\s+([A-Za-z_]\w*)\s*(?::\s*[^{]+)?\s*\{/g;
+    const mainSource = source.match(/\bint\s+main\s*\([^)]*\)\s*\{([\s\S]*)\}\s*$/)?.[1] || "";
+
+    for (const classMatch of source.matchAll(classRegex)) {
+      const className = classMatch[1];
+      const openBraceIndex = classMatch.index + classMatch[0].length - 1;
+      const closeBraceIndex = findMatchingBrace(source, openBraceIndex);
+      if (closeBraceIndex === -1) continue;
+
+      const afterClass = source.slice(closeBraceIndex + 1).trimStart();
+      if (!afterClass.startsWith(";")) {
+        diagnostics.push(`Missing ';' after class ${className}.`);
+      }
+
+      const classBody = source.slice(openBraceIndex + 1, closeBraceIndex);
+      const constructorRegex = new RegExp(
+        `${className}\\s*\\([^)]*\\)\\s*(?::\\s*[^{}]*)?\\s*\\{([\\s\\S]*?)\\}`,
+        "g",
+      );
+
+      for (const constructorMatch of classBody.matchAll(constructorRegex)) {
+        if (/\breturn\b/.test(constructorMatch[1])) {
+          diagnostics.push(`Constructor ${className} cannot return a value.`);
+        }
+      }
+
+      const firstPublicIndex = classBody.search(/\bpublic\s*:/);
+      const firstConstructor = classBody.search(
+        new RegExp(`${className}\\s*\\(`),
+      );
+      const constructorIsPrivate =
+        firstConstructor !== -1 &&
+        (firstPublicIndex === -1 || firstConstructor < firstPublicIndex);
+      const constructedInMain = new RegExp(`\\b${className}\\s+[A-Za-z_]\\w*\\s*[({;]`)
+        .test(mainSource);
+
+      if (constructorIsPrivate && constructedInMain) {
+        diagnostics.push(
+          `${className} constructor is private by default. Add public: before constructors and methods used in main().`,
+        );
+      }
+    }
+
+    return diagnostics;
+  }
+
+  function collectStatementDiagnostics(source) {
+    const diagnostics = [];
+    const lines = source.split("\n");
+
+    lines.forEach((line, index) => {
+      const trimmed = line.trim();
+      const next = lines[index + 1]?.trim() || "";
+
+      if (!trimmed || trimmed.startsWith("#")) return;
+      if (/^(class|struct|public:|private:|protected:|else\b|catch\b)/.test(trimmed)) return;
+      if (/[;:{}]$/.test(trimmed)) return;
+      if (/[{,]$/.test(trimmed)) return;
+      if (/^(if|for|while|switch)\s*\(/.test(trimmed)) return;
+
+      const looksLikeStatement =
+        /\b(return|cout|cin|delete|new)\b/.test(trimmed) ||
+        /=/.test(trimmed) ||
+        /^\)/.test(trimmed);
+
+      if (looksLikeStatement && next.startsWith("}")) {
+        diagnostics.push(`Possible missing ';' before line ${index + 2}.`);
+      }
+    });
+
+    return diagnostics;
   }
 
   function cleanLiteral(value = "") {
@@ -492,10 +730,12 @@ export default function CodeChallenge({
       const closeBraceIndex = findMatchingBrace(source, openBraceIndex);
       if (closeBraceIndex === -1) continue;
 
-      functions.set(functionName, {
+      const overloads = functions.get(functionName) || [];
+      overloads.push({
         params: getParamNames(params),
         body: source.slice(openBraceIndex + 1, closeBraceIndex),
       });
+      functions.set(functionName, overloads);
     }
 
     return functions;
@@ -526,7 +766,7 @@ export default function CodeChallenge({
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
-  function renderFunctionBody(body, values, maxLines = 200) {
+  function renderFunctionBody(body, values, functionDefs = new Map(), maxLines = 200) {
     const output = [];
     let lineCount = 0;
 
@@ -537,7 +777,7 @@ export default function CodeChallenge({
 
         const rendered = line
           .split("<<")
-          .map((part) => renderCoutPart(part, scopedValues))
+          .map((part) => renderCoutPart(part, scopedValues, functionDefs))
           .join("");
         if (rendered) {
           output.push(rendered);
@@ -580,40 +820,109 @@ export default function CodeChallenge({
   }
 
   function evaluateExpression(expression, values) {
-    const normalized = expression
-      .replace(/\bM_PI\b|\bPI\b/g, "3.14159")
-      .replace(/\b([A-Za-z_]\w*)\b/g, (match) => {
-        if (values.has(match)) return values.get(match);
-        return match;
-      });
-
-    if (!/^[\d+\-*/().\s]+$/.test(normalized)) return "";
-
-    const productParts = normalized.split("*").map((part) => part.trim());
-    if (productParts.length < 2) return "";
-
-    const result = productParts.reduce((product, part) => {
-      const value = Number(part.replace(/[()]/g, ""));
-      return Number.isFinite(value) ? product * value : NaN;
-    }, 1);
-
+    const result = evaluateNumericExpression(expression, values);
     if (!Number.isFinite(result)) return "";
     return Number.isInteger(result)
       ? String(result)
       : String(Number(result.toFixed(2)));
   }
 
-  function collectFunctionOutput(source, baseValues, mainSource) {
+  function evaluateNumericExpression(expression, values) {
+    const tokens = String(expression)
+      .replace(/\bM_PI\b|\bPI\b/g, "3.14159")
+      .match(/sqrt|[A-Za-z_]\w*|\d+(?:\.\d+)?|[()+\-*/]/g);
+    if (!tokens) return NaN;
+
+    let index = 0;
+    const peek = () => tokens[index];
+    const consume = () => tokens[index++];
+
+    function parseExpression() {
+      let value = parseTerm();
+      while (peek() === "+" || peek() === "-") {
+        const op = consume();
+        const next = parseTerm();
+        value = op === "+" ? value + next : value - next;
+      }
+      return value;
+    }
+
+    function parseTerm() {
+      let value = parseFactor();
+      while (peek() === "*" || peek() === "/") {
+        const op = consume();
+        const next = parseFactor();
+        value = op === "*" ? value * next : value / next;
+      }
+      return value;
+    }
+
+    function parseFactor() {
+      const token = consume();
+      if (token === "-") return -parseFactor();
+      if (token === "+") return parseFactor();
+      if (token === "(") {
+        const value = parseExpression();
+        if (peek() === ")") consume();
+        return value;
+      }
+      if (token === "sqrt") {
+        if (peek() === "(") consume();
+        const value = parseExpression();
+        if (peek() === ")") consume();
+        return Math.sqrt(value);
+      }
+      if (/^\d/.test(token)) return Number(token);
+      if (values.has(token)) return Number(values.get(token));
+      return NaN;
+    }
+
+    const result = parseExpression();
+    return index <= tokens.length && Number.isFinite(result) ? result : NaN;
+  }
+
+  function evaluateFunctionCall(token, values, functionDefs) {
+    const callMatch = token.match(/^([A-Za-z_]\w*)\s*\((.*)\)$/);
+    if (!callMatch) return "";
+
+    const [, functionName, rawArgs] = callMatch;
+    const overloads = functionDefs.get(functionName) || [];
+    const args = splitArgs(rawArgs);
+    const functionDef = overloads.find((item) => item.params.length === args.length);
+    if (!functionDef) return "";
+
+    const scopedValues = new Map(values);
+    functionDef.params.forEach((param, index) => {
+      const arg = args[index] || "";
+      const numericValue = evaluateNumericExpression(arg, values);
+      scopedValues.set(
+        param,
+        Number.isFinite(numericValue) ? String(numericValue) : resolveToken(arg, values),
+      );
+    });
+
+    const localDeclarationRegex =
+      /\b(?:int|double|float|auto)\s+([A-Za-z_]\w*)\s*=\s*([^;]+);/g;
+    for (const localMatch of functionDef.body.matchAll(localDeclarationRegex)) {
+      const [, name, expr] = localMatch;
+      const value = evaluateExpression(expr, scopedValues);
+      if (value !== "") scopedValues.set(name, value);
+    }
+
+    const returnMatch = functionDef.body.match(/return\s+([^;]+);/);
+    return returnMatch ? evaluateExpression(returnMatch[1], scopedValues) : "";
+  }
+
+  function collectFunctionOutput(source, baseValues, mainSource, functionDefs) {
     const output = [];
-    const functionDefs = collectFunctionDefs(source);
     const callRegex = /\b([A-Za-z_]\w*)\s*\(([^;{}]*)\)\s*;/g;
 
     for (const callMatch of mainSource.matchAll(callRegex)) {
-      const functionDef = functionDefs.get(callMatch[1]);
+      const functionDef = (functionDefs.get(callMatch[1]) || [])[0];
       if (!functionDef) continue;
 
       const values = bindFunctionArgs(functionDef, callMatch[2], baseValues);
-      output.push(...renderFunctionBody(functionDef.body, values));
+      output.push(...renderFunctionBody(functionDef.body, values, functionDefs));
     }
 
     return output;
@@ -714,10 +1023,11 @@ export default function CodeChallenge({
     return values;
   }
 
-  function renderCoutPart(part, values) {
+  function renderCoutPart(part, values, functionDefs = new Map()) {
     const token = part.trim().replace(/;$/, "");
     if (!token || token === "cout") return "";
     if (token === "endl") return "\n";
+    if (token === "fixed" || /^setprecision\s*\(/.test(token)) return "";
     if (token === '"\\n"' || token === "'\\n'") return "\n";
     if (
       (token.startsWith('"') && token.endsWith('"')) ||
@@ -739,6 +1049,8 @@ export default function CodeChallenge({
       /\[([A-Za-z_]\w*)\]/g,
       (match, name) => `[${values.get(name) ?? name}]`,
     );
+    const functionValue = evaluateFunctionCall(token, values, functionDefs);
+    if (functionValue !== "") return functionValue;
     if (values.has(resolvedIndexedToken)) return values.get(resolvedIndexedToken);
     if (values.has(token)) return values.get(token);
     return "";
@@ -746,17 +1058,20 @@ export default function CodeChallenge({
 
   function simulateCppOutput(source = "") {
     const values = collectKnownValues(source);
+    const functionDefs = collectFunctionDefs(source);
     const outputLines = collectObjectOutput(source, values);
     const mainMatch = source.match(/\bint\s+main\s*\([^)]*\)\s*\{([\s\S]*)\}\s*$/);
     const directOutputSource = mainMatch ? mainMatch[1] : source;
-    outputLines.push(...collectFunctionOutput(source, values, directOutputSource));
+    outputLines.push(
+      ...collectFunctionOutput(source, values, directOutputSource, functionDefs),
+    );
 
     directOutputSource.split("\n").forEach((rawLine) => {
       const line = rawLine.split("//")[0];
       if (!line.includes("cout")) return;
       const rendered = line
         .split("<<")
-        .map((part) => renderCoutPart(part, values))
+        .map((part) => renderCoutPart(part, values, functionDefs))
         .join("");
       if (rendered) outputLines.push(rendered);
     });
