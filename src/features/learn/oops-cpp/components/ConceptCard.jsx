@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 // Minimal markdown bold + inline code renderer
 function InlineText({ text }) {
@@ -17,6 +19,40 @@ function InlineText({ text }) {
         return p;
       })}
     </>
+  );
+}
+
+function CodeSnippet({ code, language = "cpp" }) {
+  return (
+    <div className="oops-pre">
+      <SyntaxHighlighter
+        language={language === "c++" ? "cpp" : language}
+        style={vscDarkPlus}
+        customStyle={{
+          margin: 0,
+          padding: "20px",
+          background: "transparent",
+          fontSize: "0.86rem",
+          lineHeight: 1.72,
+        }}
+        codeTagProps={{
+          style: {
+            fontFamily: "var(--font-mono, 'Fira Code', monospace)",
+          },
+        }}
+        lineNumberStyle={{
+          color: "rgba(184, 255, 0, 0.28)",
+          fontSize: "0.72rem",
+          minWidth: "2.4em",
+          paddingRight: "1em",
+          userSelect: "none",
+        }}
+        showLineNumbers
+        wrapLongLines
+      >
+        {code}
+      </SyntaxHighlighter>
+    </div>
   );
 }
 
@@ -79,9 +115,7 @@ export default function ConceptCard({ block, accentColor }) {
             </button>
           </div>
         )}
-        <pre className="oops-pre">
-          <code>{block.content}</code>
-        </pre>
+        <CodeSnippet code={block.content} language={block.lang || "cpp"} />
       </div>
     );
   }
@@ -182,9 +216,7 @@ export default function ConceptCard({ block, accentColor }) {
           ))}
         </div>
         <div className="oops-step-detail">
-          <pre>
-            <code>{step.code}</code>
-          </pre>
+          <CodeSnippet code={step.code} language="cpp" />
           <p>
             <InlineText text={step.desc} />
           </p>
