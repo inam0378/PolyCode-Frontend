@@ -2,12 +2,18 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CHAPTERS } from "../data/oopsCurriculum";
 
-export default function OopsSidebar({ currentLessonId, progress }) {
+export default function OopsSidebar({
+  currentLessonId,
+  progress,
+  chapters = CHAPTERS,
+  basePath = "/learn/oops-cpp",
+  title = "OOP in C++",
+}) {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
   // Which chapters are expanded — default: expand current chapter
-  const currentChapter = CHAPTERS.find((ch) =>
+  const currentChapter = chapters.find((ch) =>
     ch.lessons.some((l) => l.id === currentLessonId),
   );
   const [expanded, setExpanded] = useState(
@@ -27,7 +33,7 @@ export default function OopsSidebar({ currentLessonId, progress }) {
       className={`oops-sidebar ${collapsed ? "oops-sidebar-collapsed" : ""}`}
     >
       <div className="oops-sidebar-header">
-        {!collapsed && <span className="oops-sidebar-title">OOP in C++</span>}
+        {!collapsed && <span className="oops-sidebar-title">{title}</span>}
         <button
           className="oops-sidebar-toggle"
           onClick={() => setCollapsed(!collapsed)}
@@ -39,7 +45,7 @@ export default function OopsSidebar({ currentLessonId, progress }) {
 
       {!collapsed && (
         <nav className="oops-sidebar-nav">
-          {CHAPTERS.map((ch) => {
+          {chapters.map((ch) => {
             const isOpen = expanded.has(ch.id);
             const doneLessons = ch.lessons.filter((l) => progress[l.id]).length;
             const allDone = doneLessons === ch.lessons.length;
@@ -70,7 +76,7 @@ export default function OopsSidebar({ currentLessonId, progress }) {
                             className={`oops-sidebar-lesson-btn ${isDone ? "done" : ""} ${isCurrent ? "current" : ""}`}
                             style={{ "--ch-color": ch.color }}
                             onClick={() =>
-                              navigate(`/learn/oops-cpp/lesson/${l.id}`)
+                              navigate(`${basePath}/lesson/${l.id}`)
                             }
                           >
                             <span className="oops-sb-check">

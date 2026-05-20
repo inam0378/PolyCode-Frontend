@@ -115,7 +115,13 @@ export default function Navbar({
         </Link>
         {/* Learn nav link — highlights for all /learn/* sub-routes */}
         <Link to="/learn/oops-cpp" className={isActive("/learn/oops-cpp")}>
-          Learn
+          OOPs
+        </Link>
+        <Link
+          to="/learn/pointers-cpp"
+          className={isActive("/learn/pointers-cpp")}
+        >
+          Pointers
         </Link>
         <NavLink
           to="/playground"
@@ -176,6 +182,13 @@ export default function Navbar({
                   <strong>{user.username}</strong>
                   <span>{user.email}</span>
                 </div>
+                <Link
+                  to="/profile"
+                  className="navbar-dropdown-item"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  View profile
+                </Link>
                 <button
                   type="button"
                   className="navbar-dropdown-item navbar-dropdown-logout"

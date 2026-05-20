@@ -492,6 +492,190 @@
   box-shadow: 0 0 0 3px var(--acid-dim);
 }
 
+/* ── Learning and profile polish ── */
+.app.theme-light .learn-shell,
+.app.theme-light .oops-page,
+.app.theme-light .oops-lesson-page,
+.app.theme-light .profile-page {
+  background:
+    linear-gradient(180deg, rgba(14, 165, 233, 0.08), transparent 260px),
+    #f8fafc;
+}
+
+.app.theme-light .profile-hero,
+.app.theme-light .profile-overview-grid div,
+.app.theme-light .profile-activity-card,
+.app.theme-light .profile-track-card,
+.app.theme-light .oops-problem-panel,
+.app.theme-light .oops-brief-card,
+.app.theme-light .oops-notes-panel,
+.app.theme-light .oops-confidence-panel,
+.app.theme-light .oops-quiz-card,
+.app.theme-light .oops-callout,
+.app.theme-light .oops-diagram,
+.app.theme-light .oops-stepthrough,
+.app.theme-light .oops-code-block {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.11);
+  box-shadow: var(--shadow-sm);
+}
+
+.app.theme-light .profile-hero {
+  background:
+    radial-gradient(circle at top right, rgba(14, 165, 233, 0.14), transparent 34%),
+    #ffffff;
+}
+
+.app.theme-light .profile-kicker,
+.app.theme-light .oops-interactive-label,
+.app.theme-light .oops-summary-kicker,
+.app.theme-light .oops-test-cases-label,
+.app.theme-light .oops-output-head span {
+  color: #047857;
+}
+
+.app.theme-light .profile-hero h1,
+.app.theme-light .profile-track-head h2,
+.app.theme-light .profile-activity-head h2,
+.app.theme-light .oops-lesson-heading,
+.app.theme-light .oops-problem-title,
+.app.theme-light .oops-brief-card h3,
+.app.theme-light .oops-notes-panel h3,
+.app.theme-light .oops-confidence-panel h3,
+.app.theme-light .oops-quiz-card h4 {
+  color: #0f172a;
+}
+
+.app.theme-light .profile-hero p,
+.app.theme-light .profile-total-progress span,
+.app.theme-light .profile-overview-grid span,
+.app.theme-light .profile-activity-footer,
+.app.theme-light .profile-track-head span,
+.app.theme-light .profile-track-stats span,
+.app.theme-light .profile-next-row span,
+.app.theme-light .oops-problem-desc,
+.app.theme-light .oops-brief-card p,
+.app.theme-light .oops-brief-card li {
+  color: #64748b;
+}
+
+.app.theme-light .profile-total-progress,
+.app.theme-light .profile-track-stats div,
+.app.theme-light .oops-easy-summary > div,
+.app.theme-light .oops-test-cases,
+.app.theme-light .oops-output-panel {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+.app.theme-light .profile-activity-cell,
+.app.theme-light .profile-activity-legend i {
+  background: #e2e8f0;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.app.theme-light .profile-activity-cell[data-level="1"],
+.app.theme-light .profile-activity-legend i[data-level="1"] {
+  background: #bae6fd;
+}
+
+.app.theme-light .profile-activity-cell[data-level="2"],
+.app.theme-light .profile-activity-legend i[data-level="2"] {
+  background: #38bdf8;
+}
+
+.app.theme-light .profile-activity-cell[data-level="3"],
+.app.theme-light .profile-activity-legend i[data-level="3"] {
+  background: #0ea5e9;
+}
+
+.app.theme-light .profile-activity-cell[data-level="4"],
+.app.theme-light .profile-activity-legend i[data-level="4"] {
+  background: #047857;
+}
+
+.app.theme-light .profile-activity-tooltip {
+  background: #0f172a;
+  border-color: rgba(14, 165, 233, 0.32);
+  color: #ffffff;
+}
+
+.app.theme-light .oops-test-pass {
+  background: rgba(4, 120, 87, 0.09);
+}
+
+.app.theme-light .oops-test-fail {
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.app.theme-light .oops-editor-panel {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.13);
+  box-shadow: var(--shadow-md);
+}
+
+.app.theme-light .oops-editor-topbar,
+.app.theme-light .oops-run-bar {
+  background: #f1f5f9;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+.app.theme-light .oops-code-block ::selection,
+.app.theme-light .oops-code-block *::selection,
+.app.theme-light .oops-code-block .token::selection,
+.app.theme-light .oops-code-block span::selection,
+.app.theme-light .oops-code-block code::selection,
+.app.theme-light .oops-code-block pre::selection {
+  background: #7dd3fc !important;
+  color: #06121f !important;
+  -webkit-text-fill-color: #06121f !important;
+  text-shadow: none !important;
+}
+
+.app.theme-light .language-landing {
+  background:
+    linear-gradient(180deg, rgba(14, 165, 233, 0.08), transparent 280px),
+    #f8fafc;
+}
+
+.app.theme-light .language-landing-hero {
+  background:
+    radial-gradient(circle at 78% 24%, color-mix(in srgb, var(--language-color) 16%, transparent), transparent 36%),
+    #ffffff;
+  border-color: color-mix(in srgb, var(--language-color) 25%, rgba(15, 23, 42, 0.12));
+  box-shadow: var(--shadow-lg);
+}
+
+.app.theme-light .language-hero-copy h1,
+.app.theme-light .language-section-head h2,
+.app.theme-light .language-course-card h3 {
+  color: #0f172a;
+}
+
+.app.theme-light .language-hero-copy p,
+.app.theme-light .language-course-card p {
+  color: #475569;
+}
+
+.app.theme-light .language-secondary-btn {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+
+.app.theme-light .language-hero-icon,
+.app.theme-light .language-course-card {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--course-accent, var(--language-color)) 7%, transparent), transparent 48%),
+    #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: var(--shadow-sm);
+}
+
+.app.theme-light .language-course-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
 /* ── Playground IDE (CodePlayground.css dark defaults) ── */
 .app.theme-light .playground-root {
   background: #f8fafc;

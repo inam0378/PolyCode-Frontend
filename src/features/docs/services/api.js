@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toDocumentApiPath } from "../../../shared/utils/docPaths";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
@@ -96,7 +97,7 @@ export const getDocuments = (params) => dedupGet("/documents", params);
 
 export const getDocument = (id, language) => {
   const params = language ? { language } : {};
-  return dedupGet(`/documents/${id}`, params);
+  return dedupGet(`/documents/${toDocumentApiPath(id, language)}`, params);
 };
 
 export const getCategories = (params) =>

@@ -37,7 +37,6 @@ export default function useOopsProgress() {
 
   useEffect(() => {
     let cancelled = false;
-    console.log(localVersion, "refreshing local");
     if (!token) {
       setRemoteProgress(null);
       setSyncState("local");

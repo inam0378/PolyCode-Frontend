@@ -1,7 +1,13 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CHAPTERS, TOTAL_XP, ALL_LESSONS } from "../data/oopsCurriculum";
-import useOopsProgress from "../hooks/useOopsProgress";
+import {
+  POINTER_CHAPTERS,
+  POINTER_LESSONS,
+  POINTER_TOTAL_XP,
+} from "../data/pointersCurriculum";
+import usePointersProgress from "../hooks/usePointersProgress";
+
+const BASE_PATH = "/learn/pointers-cpp";
 
 function lessonPlainText(lesson) {
   return lesson.theory
@@ -10,38 +16,37 @@ function lessonPlainText(lesson) {
     .join(" ");
 }
 
-export default function OopsHub() {
+export default function PointersHub() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const {
-    user,
-    syncState,
-    remoteProgress,
     completedMap: progress,
     bookmarks,
     lastLessonId,
-  } = useOopsProgress();
+  } = usePointersProgress();
+
   const completedCount = Object.keys(progress).length;
-  const earnedXP = ALL_LESSONS.filter((l) => progress[l.id]).reduce(
-    (s, l) => s + l.xp,
+  const earnedXP = POINTER_LESSONS.filter((lesson) => progress[lesson.id]).reduce(
+    (sum, lesson) => sum + lesson.xp,
     0,
   );
-  const pct = Math.round((completedCount / ALL_LESSONS.length) * 100) || 0;
+  const pct = Math.round((completedCount / POINTER_LESSONS.length) * 100) || 0;
   const nextLesson =
-    ALL_LESSONS.find((l) => !progress[l.id]) || ALL_LESSONS[0];
+    POINTER_LESSONS.find((lesson) => !progress[lesson.id]) || POINTER_LESSONS[0];
   const resumeLesson =
-    ALL_LESSONS.find((l) => l.id === lastLessonId) || nextLesson;
-  const completedChapters = CHAPTERS.filter((ch) =>
-    ch.lessons.every((lesson) => progress[lesson.id]),
+    POINTER_LESSONS.find((lesson) => lesson.id === lastLessonId) || nextLesson;
+  const completedChapters = POINTER_CHAPTERS.filter((chapter) =>
+    chapter.lessons.every((lesson) => progress[lesson.id]),
   ).length;
   const bookmarkedLessons = bookmarks
-    .map((id) => ALL_LESSONS.find((lesson) => lesson.id === id))
+    .map((id) => POINTER_LESSONS.find((lesson) => lesson.id === id))
     .filter(Boolean);
+
   const filteredLessons = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    return ALL_LESSONS.filter((lesson) => {
+    return POINTER_LESSONS.filter((lesson) => {
       const matchesQuery =
         !query ||
         lesson.title.toLowerCase().includes(query) ||
@@ -56,35 +61,28 @@ export default function OopsHub() {
       return matchesQuery && matchesFilter;
     });
   }, [bookmarks, filter, progress, search]);
-  const syncLabel = user
-    ? syncState === "synced"
-      ? "MongoDB sync active"
-      : syncState === "syncing"
-        ? "Syncing progress..."
-        : "Signed in, sync pending"
-    : "Guest progress on this device";
 
   return (
-    <div className="oops-hub">
-      {/* Hero */}
-      <div className="oops-hero">
-        <div className="oops-hero-badge">FREECODECAMP-STYLE C++ TRACK</div>
+    <div className="oops-hub pointers-hub">
+      <div className="oops-hero pointers-hero">
+        <div className="oops-hero-badge">MODERN C++ MEMORY TRACK</div>
         <h1 className="oops-hero-title">
-          Object-Oriented
+          C++ Pointers
           <br />
-          <span className="oops-hero-accent">Programming</span>
+          <span className="oops-hero-accent">Learning Guide</span>
         </h1>
         <p className="oops-hero-sub">
-          Learn OOP by reading short concepts, stepping through diagrams,
-          solving quizzes, and writing C++ in focused coding challenges.
+          Master addresses, dereferencing, arrays, ownership, smart pointers,
+          callbacks, and pointer safety with short explanations and focused
+          coding challenges.
         </p>
 
         <div className="oops-hero-grid">
           <div className="oops-xp-bar-wrap">
             <div className="oops-xp-meta">
               <span>
-                {completedCount}/{ALL_LESSONS.length} lessons · {earnedXP}/
-                {TOTAL_XP} XP
+                {completedCount}/{POINTER_LESSONS.length} lessons · {earnedXP}/
+                {POINTER_TOTAL_XP} XP
               </span>
               <span>{pct}%</span>
             </div>
@@ -94,20 +92,16 @@ export default function OopsHub() {
           </div>
 
           <div className="oops-resume-panel">
-            <span className="oops-sync-pill">{syncLabel}</span>
-            <h2>{resumeLesson ? resumeLesson.title : "Start the guide"}</h2>
+            <span className="oops-sync-pill">Progress saved on this device</span>
+            <h2>{resumeLesson.title}</h2>
             <p>
-              {resumeLesson
-                ? `${resumeLesson.chapterTitle} · ${resumeLesson.xp} XP`
-                : "Begin with the first OOP concept."}
+              {resumeLesson.chapterTitle} · {resumeLesson.xp} XP
             </p>
             <button
               type="button"
-              onClick={() =>
-                navigate(`/learn/oops-cpp/lesson/${resumeLesson.id}`)
-              }
+              onClick={() => navigate(`${BASE_PATH}/lesson/${resumeLesson.id}`)}
             >
-              {completedCount > 0 ? "Resume Learning" : "Start Learning"}
+              {completedCount > 0 ? "Resume Pointers" : "Start Pointers"}
             </button>
           </div>
         </div>
@@ -115,16 +109,16 @@ export default function OopsHub() {
 
       <div className="oops-guide-tools">
         <div className="oops-tool-panel oops-tool-panel-main">
-          <span className="oops-interactive-label">Find a concept</span>
+          <span className="oops-interactive-label">Find a pointer concept</span>
           <div className="oops-search-row">
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search constructors, inheritance, virtual..."
-              aria-label="Search OOP lessons"
+              placeholder="Search nullptr, arrays, unique_ptr, callbacks..."
+              aria-label="Search pointer lessons"
             />
-            <div className="oops-filter-tabs" aria-label="Filter lessons">
+            <div className="oops-filter-tabs" aria-label="Filter pointer lessons">
               {[
                 ["all", "All"],
                 ["todo", "To do"],
@@ -149,7 +143,7 @@ export default function OopsHub() {
                 type="button"
                 className="oops-search-result"
                 style={{ "--ch-color": lesson.chapterColor }}
-                onClick={() => navigate(`/learn/oops-cpp/lesson/${lesson.id}`)}
+                onClick={() => navigate(`${BASE_PATH}/lesson/${lesson.id}`)}
               >
                 <span>{progress[lesson.id] ? "✓" : "○"}</span>
                 <strong>{lesson.title}</strong>
@@ -157,7 +151,7 @@ export default function OopsHub() {
               </button>
             ))}
             {filteredLessons.length === 0 && (
-              <p className="oops-empty-copy">No lessons match that search yet.</p>
+              <p className="oops-empty-copy">No pointer lessons match that search yet.</p>
             )}
           </div>
         </div>
@@ -167,11 +161,11 @@ export default function OopsHub() {
           <h2>{nextLesson.title}</h2>
           <p>
             Next up in {nextLesson.chapterTitle}. Finish it to earn{" "}
-            {nextLesson.xp} XP and keep your path moving.
+            {nextLesson.xp} XP.
           </p>
           <button
             type="button"
-            onClick={() => navigate(`/learn/oops-cpp/lesson/${nextLesson.id}`)}
+            onClick={() => navigate(`${BASE_PATH}/lesson/${nextLesson.id}`)}
           >
             Open next lesson
           </button>
@@ -185,9 +179,7 @@ export default function OopsHub() {
                 <button
                   key={lesson.id}
                   type="button"
-                  onClick={() =>
-                    navigate(`/learn/oops-cpp/lesson/${lesson.id}`)
-                  }
+                  onClick={() => navigate(`${BASE_PATH}/lesson/${lesson.id}`)}
                 >
                   <strong>{lesson.title}</strong>
                   <small>{lesson.chapterTitle}</small>
@@ -195,7 +187,7 @@ export default function OopsHub() {
               ))}
             </div>
           ) : (
-            <p>Bookmark hard lessons and they will show up here for review.</p>
+            <p>Bookmark tricky pointer lessons and review them here.</p>
           )}
         </div>
       </div>
@@ -204,18 +196,20 @@ export default function OopsHub() {
         <div className="oops-stat-tile">
           <span>Lessons</span>
           <strong>
-            {completedCount}/{ALL_LESSONS.length}
+            {completedCount}/{POINTER_LESSONS.length}
           </strong>
         </div>
         <div className="oops-stat-tile">
           <span>Chapters</span>
           <strong>
-            {completedChapters}/{CHAPTERS.length}
+            {completedChapters}/{POINTER_CHAPTERS.length}
           </strong>
         </div>
         <div className="oops-stat-tile">
-          <span>Streak</span>
-          <strong>{remoteProgress?.currentStreak || 0} days</strong>
+          <span>XP</span>
+          <strong>
+            {earnedXP}/{POINTER_TOTAL_XP}
+          </strong>
         </div>
         <div className="oops-stat-tile">
           <span>Bookmarks</span>
@@ -224,51 +218,49 @@ export default function OopsHub() {
       </div>
 
       <div className="oops-path-overview">
-        {CHAPTERS.map((ch, index) => {
-          const done = ch.lessons.filter((l) => progress[l.id]).length;
-          const active = done > 0 && done < ch.lessons.length;
+        {POINTER_CHAPTERS.map((chapter, index) => {
+          const done = chapter.lessons.filter((lesson) => progress[lesson.id]).length;
+          const active = done > 0 && done < chapter.lessons.length;
           return (
             <button
-              key={ch.id}
+              key={chapter.id}
               className={`oops-path-step ${active ? "active" : ""} ${
-                done === ch.lessons.length ? "done" : ""
+                done === chapter.lessons.length ? "done" : ""
               }`}
-              style={{ "--ch-color": ch.color }}
-              onClick={() =>
-                navigate(`/learn/oops-cpp/lesson/${ch.lessons[0].id}`)
-              }
+              style={{ "--ch-color": chapter.color }}
+              onClick={() => navigate(`${BASE_PATH}/lesson/${chapter.lessons[0].id}`)}
               type="button"
             >
               <span>{index + 1}</span>
-              <strong>{ch.title}</strong>
+              <strong>{chapter.title}</strong>
               <small>
-                {done}/{ch.lessons.length}
+                {done}/{chapter.lessons.length}
               </small>
             </button>
           );
         })}
       </div>
 
-      {/* Chapter Grid */}
       <div className="oops-chapters">
-        {CHAPTERS.map((ch, i) => {
-          const chLessons = ch.lessons;
-          const done = chLessons.filter((l) => progress[l.id]).length;
-          const chPct = Math.round((done / chLessons.length) * 100) || 0;
-          const firstUnfinished = chLessons.find((l) => !progress[l.id]);
-          const allDone = done === chLessons.length;
+        {POINTER_CHAPTERS.map((chapter, index) => {
+          const done = chapter.lessons.filter((lesson) => progress[lesson.id]).length;
+          const chapterPct = Math.round((done / chapter.lessons.length) * 100) || 0;
+          const firstUnfinished = chapter.lessons.find(
+            (lesson) => !progress[lesson.id],
+          );
+          const allDone = done === chapter.lessons.length;
 
           return (
             <div
-              key={ch.id}
+              key={chapter.id}
               className={`oops-chapter-card ${allDone ? "oops-chapter-done" : ""}`}
-              style={{ "--ch-color": ch.color }}
+              style={{ "--ch-color": chapter.color }}
             >
               <div className="oops-chapter-header">
-                <span className="oops-chapter-icon">{ch.icon}</span>
+                <span className="oops-chapter-icon">{chapter.icon}</span>
                 <div>
-                  <div className="oops-chapter-num">Chapter {i + 1}</div>
-                  <div className="oops-chapter-title">{ch.title}</div>
+                  <div className="oops-chapter-num">Chapter {index + 1}</div>
+                  <div className="oops-chapter-title">{chapter.title}</div>
                 </div>
                 {allDone && <span className="oops-done-badge">✓ Done</span>}
               </div>
@@ -276,27 +268,27 @@ export default function OopsHub() {
               <div className="oops-chapter-progress-track">
                 <div
                   className="oops-chapter-progress-fill"
-                  style={{ width: `${chPct}%` }}
+                  style={{ width: `${chapterPct}%` }}
                 />
               </div>
               <div className="oops-chapter-meta">
-                {done}/{chLessons.length} lessons · {chPct}%
+                {done}/{chapter.lessons.length} lessons · {chapterPct}%
               </div>
 
               <ul className="oops-lesson-list">
-                {chLessons.map((l) => {
-                  const isDone = !!progress[l.id];
+                {chapter.lessons.map((lesson) => {
+                  const isDone = !!progress[lesson.id];
                   return (
                     <li
-                      key={l.id}
+                      key={lesson.id}
                       className={`oops-lesson-item ${isDone ? "done" : ""}`}
-                      onClick={() => navigate(`/learn/oops-cpp/lesson/${l.id}`)}
+                      onClick={() => navigate(`${BASE_PATH}/lesson/${lesson.id}`)}
                     >
                       <span className="oops-lesson-status">
                         {isDone ? "✓" : "○"}
                       </span>
-                      <span className="oops-lesson-name">{l.title}</span>
-                      <span className="oops-lesson-xp">+{l.xp} XP</span>
+                      <span className="oops-lesson-name">{lesson.title}</span>
+                      <span className="oops-lesson-xp">+{lesson.xp} XP</span>
                     </li>
                   );
                 })}
@@ -306,15 +298,13 @@ export default function OopsHub() {
                 className="oops-chapter-cta"
                 onClick={() =>
                   navigate(
-                    `/learn/oops-cpp/lesson/${firstUnfinished ? firstUnfinished.id : ch.lessons[0].id}`,
+                    `${BASE_PATH}/lesson/${
+                      firstUnfinished ? firstUnfinished.id : chapter.lessons[0].id
+                    }`,
                   )
                 }
               >
-                {allDone
-                  ? "Review Chapter →"
-                  : done > 0
-                    ? "Continue →"
-                    : "Start →"}
+                {allDone ? "Review Chapter →" : done > 0 ? "Continue →" : "Start →"}
               </button>
             </div>
           );

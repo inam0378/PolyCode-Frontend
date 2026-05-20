@@ -71,7 +71,6 @@ export default function LanguageSelectPage({ onLanguageSelect, continueLanguage 
     
     setTimeout(() => {
       onLanguageSelect(language);
-      navigate('/hub');
     }, 300);
   };
 
@@ -111,7 +110,7 @@ export default function LanguageSelectPage({ onLanguageSelect, continueLanguage 
           <button
             type="button"
             className="btn-secondary continue-stack-btn"
-            onClick={() => navigate('/hub')}
+            onClick={() => navigate(`/language/${encodeURIComponent(continueLanguage)}`)}
             style={{ margin: '0 auto 24px', display: 'block' }}
           >
             Continue with {continueLanguage} →

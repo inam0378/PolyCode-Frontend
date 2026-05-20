@@ -5,6 +5,7 @@ import {
   formatCategory,
 } from "../../../shared/utils/categories";
 import { formatName } from "../../../shared/utils/format";
+import { toDocRoute } from "../../../shared/utils/docPaths";
 
 export default function DocCard({ doc }) {
   const meta = getCategoryMeta(doc.category);
@@ -12,7 +13,7 @@ export default function DocCard({ doc }) {
 
   return (
     <Link
-      to={`/doc/${encodeURIComponent(doc.path)}`}
+      to={toDocRoute(doc.path)}
       className={`premium-doc-card fade-up ${isTopicCard ? "topic" : "file"}`}
       style={{ "--accent-color": meta.color }}
     >

@@ -1,11 +1,17 @@
-import React, { useRef, useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ALL_LESSONS, TOTAL_XP } from "../data/oopsCurriculum";
-import ConceptCard from "../components/ConceptCard";
-import CodeChallenge from "../components/CodeChallenge";
-import OopsSidebar from "../components/OopsSidebar";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import CodeChallenge from "../../oops-cpp/components/CodeChallenge";
+import ConceptCard from "../../oops-cpp/components/ConceptCard";
+import OopsSidebar from "../../oops-cpp/components/OopsSidebar";
 import LearnProfileMenu from "../../shared/LearnProfileMenu";
-import useOopsProgress from "../hooks/useOopsProgress";
+import {
+  POINTER_CHAPTERS,
+  POINTER_LESSONS,
+  POINTER_TOTAL_XP,
+} from "../data/pointersCurriculum";
+import usePointersProgress from "../hooks/usePointersProgress";
+
+const BASE_PATH = "/learn/pointers-cpp";
 
 function plainLessonText(text = "") {
   return text.replace(/\*\*/g, "").replace(/`/g, "");
@@ -19,13 +25,14 @@ function getLessonPlainBlocks(lesson) {
 
 function getReadableSummary(lesson) {
   const blocks = getLessonPlainBlocks(lesson);
-  const intro = blocks[0] || `${lesson.title} is an important OOP idea in C++.`;
-  const analogy = blocks[1] || lesson.challenge.description;
-
   return {
-    plain: intro,
-    why: `${lesson.title} helps you write code that is easier to change, test, and reuse as your program grows.`,
-    analogy,
+    plain:
+      blocks[0] ||
+      `${lesson.title} is a core pointer concept in practical C++.`,
+    why: `${lesson.title} helps you reason about memory, ownership, and safe access instead of guessing what your program is doing.`,
+    analogy:
+      blocks[1] ||
+      "Think of a pointer as a precise address label: useful when you need to find, share, or manage an object without copying it.",
   };
 }
 
@@ -33,46 +40,37 @@ function getKeyTerms(lesson) {
   const terms = new Set();
   const source = `${lesson.title} ${getLessonPlainBlocks(lesson).join(" ")} ${
     lesson.challenge.description
-  }`;
+  }`.toLowerCase();
 
   [
-    "class",
-    "object",
-    "private",
-    "public",
-    "constructor",
-    "inheritance",
-    "encapsulation",
-    "polymorphism",
-    "abstraction",
-    "virtual",
-    "override",
     "pointer",
+    "address",
+    "dereference",
+    "nullptr",
+    "array",
     "reference",
+    "new",
+    "delete",
+    "unique_ptr",
+    "shared_ptr",
+    "ownership",
+    "callback",
+    "lifetime",
   ].forEach((term) => {
-    if (source.toLowerCase().includes(term)) terms.add(term);
+    if (source.includes(term.toLowerCase())) terms.add(term);
   });
-
-  if (terms.size < 3) {
-    lesson.title
-      .split(/\s+/)
-      .filter((word) => word.length > 3)
-      .forEach((word) => terms.add(word.toLowerCase()));
-  }
 
   return [...terms].slice(0, 6);
 }
 
-export default function LessonPage() {
+export default function PointersLessonPage() {
   const { lessonId } = useParams();
   const navigate = useNavigate();
-  const [tab, setTab] = useState("theory"); // "theory" | "challenge"
+  const [tab, setTab] = useState("theory");
   const [focusMode, setFocusMode] = useState(false);
   const [confidence, setConfidence] = useState("");
   const {
     user,
-    syncState,
-    remoteProgress,
     completedMap: progress,
     savedCodeMap,
     notesMap,
@@ -83,28 +81,28 @@ export default function LessonPage() {
     saveNote,
     toggleBookmark,
     addTime,
-  } = useOopsProgress();
+  } = usePointersProgress();
   const [noteDraft, setNoteDraft] = useState("");
   const codeSaveTimer = useRef(null);
 
-  const lesson = ALL_LESSONS.find((l) => l.id === lessonId);
-  const lessonIdx = ALL_LESSONS.findIndex((l) => l.id === lessonId);
-  const prev = ALL_LESSONS[lessonIdx - 1];
-  const next = ALL_LESSONS[lessonIdx + 1];
+  const lesson = POINTER_LESSONS.find((item) => item.id === lessonId);
+  const lessonIdx = POINTER_LESSONS.findIndex((item) => item.id === lessonId);
+  const prev = POINTER_LESSONS[lessonIdx - 1];
+  const next = POINTER_LESSONS[lessonIdx + 1];
   const firstTextBlock = lesson?.theory.find((block) => block.type === "text");
   const firstCodeBlock = lesson?.theory.find((block) => block.type === "code");
   const firstCallout = lesson?.theory.find((block) => block.type === "callout");
   const practicePrompts = lesson?.challenge?.tests?.slice(0, 3) || [];
-  const briefStepItems = [
-    `Identify the problem ${lesson?.title || "this topic"} solves.`,
-    "Read the smallest code example before the full explanation.",
-    "Change one line in the challenge and run the tests to see the effect.",
-  ];
   const lessonSummary = useMemo(
     () => (lesson ? getReadableSummary(lesson) : null),
     [lesson],
   );
   const keyTerms = useMemo(() => (lesson ? getKeyTerms(lesson) : []), [lesson]);
+  const briefStepItems = [
+    `Name the memory problem ${lesson?.title || "this lesson"} solves.`,
+    "Trace every `&`, `*`, and owner before reading the full code.",
+    "Run the challenge, then change one pointer line and run again.",
+  ];
 
   useEffect(() => {
     setTab("theory");
@@ -119,7 +117,7 @@ export default function LessonPage() {
   }, [lessonId, notesMap]);
 
   useEffect(() => {
-    setConfidence(localStorage.getItem(`oops_confidence_${lessonId}`) || "");
+    setConfidence(localStorage.getItem(`pointers_cpp_confidence_${lessonId}`) || "");
   }, [lessonId]);
 
   useEffect(() => {
@@ -138,10 +136,8 @@ export default function LessonPage() {
   if (!lesson) {
     return (
       <div className="oops-not-found">
-        <p>Lesson not found.</p>
-        <button onClick={() => navigate("/learn/oops-cpp")}>
-          ← Back to Hub
-        </button>
+        <p>Pointer lesson not found.</p>
+        <button onClick={() => navigate(BASE_PATH)}>← Back to Pointers</button>
       </div>
     );
   }
@@ -149,18 +145,10 @@ export default function LessonPage() {
   const isCompleted = !!progress[lessonId];
   const isBookmarked = bookmarks.includes(lessonId);
   const completedCount = Object.keys(progress).length;
-  const earnedXP = ALL_LESSONS.filter((item) => progress[item.id]).reduce(
+  const earnedXP = POINTER_LESSONS.filter((item) => progress[item.id]).reduce(
     (sum, item) => sum + item.xp,
     0,
   );
-  const syncLabel =
-    syncState === "synced"
-      ? "Progress saved to MongoDB"
-      : syncState === "syncing"
-        ? "Syncing progress..."
-        : user
-          ? "Progress sync pending"
-          : "Progress saved locally";
 
   async function handleChallengeComplete() {
     await completeLesson(lesson);
@@ -179,23 +167,23 @@ export default function LessonPage() {
 
   function handleConfidenceChange(value) {
     setConfidence(value);
-    localStorage.setItem(`oops_confidence_${lessonId}`, value);
+    localStorage.setItem(`pointers_cpp_confidence_${lessonId}`, value);
   }
 
   return (
     <div className={`oops-lesson-page ${focusMode ? "oops-focus-mode" : ""}`}>
-      {/* Sidebar */}
-      <OopsSidebar currentLessonId={lessonId} progress={progress} />
+      <OopsSidebar
+        currentLessonId={lessonId}
+        progress={progress}
+        chapters={POINTER_CHAPTERS}
+        basePath={BASE_PATH}
+        title="Pointers in C++"
+      />
 
-      {/* Main */}
       <div className="oops-lesson-main">
-        {/* Top bar */}
         <div className="oops-lesson-topbar">
-          <button
-            className="oops-back-btn"
-            onClick={() => navigate("/learn/oops-cpp")}
-          >
-            ← OOP C++
+          <button className="oops-back-btn" onClick={() => navigate(BASE_PATH)}>
+            ← Pointers C++
           </button>
           <div className="oops-lesson-breadcrumb">
             <span style={{ color: `var(--ch-color, ${lesson.chapterColor})` }}>
@@ -224,34 +212,32 @@ export default function LessonPage() {
           </button>
           <LearnProfileMenu
             user={user}
-            trackTitle="OOPs C++"
-            syncLabel={syncLabel}
+            trackTitle="Pointers C++"
+            syncLabel="Pointer progress saved locally"
             completedCount={completedCount}
-            totalLessons={ALL_LESSONS.length}
+            totalLessons={POINTER_LESSONS.length}
             earnedXP={earnedXP}
-            totalXP={TOTAL_XP}
+            totalXP={POINTER_TOTAL_XP}
             bookmarksCount={bookmarks.length}
-            streak={remoteProgress?.currentStreak || 0}
+            streak={0}
           />
         </div>
 
-        {/* Tab switcher — FCC style */}
         <div className="oops-tabs">
           <button
             className={`oops-tab ${tab === "theory" ? "active" : ""}`}
             onClick={() => setTab("theory")}
           >
-            📖 Theory
+            Theory
           </button>
           <button
             className={`oops-tab ${tab === "challenge" ? "active" : ""}`}
             onClick={() => setTab("challenge")}
           >
-            ⚡ Challenge <span className="oops-tab-xp">+{lesson.xp} XP</span>
+            Challenge <span className="oops-tab-xp">+{lesson.xp} XP</span>
           </button>
         </div>
 
-        {/* Content */}
         <div className="oops-lesson-content">
           {tab === "theory" ? (
             <div className="oops-theory-pane">
@@ -266,6 +252,7 @@ export default function LessonPage() {
                   ))}
                 </div>
               </div>
+
               <div className="oops-easy-summary">
                 <div>
                   <span className="oops-summary-kicker">What it means</span>
@@ -280,21 +267,22 @@ export default function LessonPage() {
                   <p>{lessonSummary.analogy}</p>
                 </div>
               </div>
+
               <div className="oops-learning-brief">
                 <div className="oops-brief-card">
                   <span className="oops-interactive-label">Start Here</span>
                   <h3>Simple explanation</h3>
                   <p>
                     {plainLessonText(firstTextBlock?.content) ||
-                      `This lesson introduces ${lesson.title} in practical C++ terms.`}
+                      `This lesson explains ${lesson.title} in practical C++ terms.`}
                   </p>
                 </div>
                 <div className="oops-brief-card">
-                  <span className="oops-interactive-label">Analogy</span>
-                  <h3>Real-life mental model</h3>
+                  <span className="oops-interactive-label">Mental Model</span>
+                  <h3>What to picture</h3>
                   <p>
                     {plainLessonText(firstCallout?.content) ||
-                      `Think of ${lesson.title} as a design decision you make before writing the class, like choosing the right tool before building.`}
+                      "Picture boxes in memory and address labels pointing at those boxes."}
                   </p>
                 </div>
                 <div className="oops-brief-card">
@@ -302,8 +290,8 @@ export default function LessonPage() {
                   <h3>What to look for</h3>
                   <p>
                     {firstCodeBlock
-                      ? `Study the "${firstCodeBlock.label}" example, then trace which data belongs to the object and which functions form the public interface.`
-                      : "Read the code slowly: identify the class name, private state, public methods, and the line where the object is used."}
+                      ? `Study the "${firstCodeBlock.label}" example. Track each address, dereference, and ownership decision.`
+                      : "Read the code slowly: find the pointer declaration, the address assignment, and every dereference."}
                   </p>
                 </div>
                 <div className="oops-brief-card">
@@ -319,55 +307,49 @@ export default function LessonPage() {
                   <span className="oops-interactive-label">Mistakes</span>
                   <h3>Common traps</h3>
                   <ul>
-                    <li>Making every field public instead of designing an interface.</li>
-                    <li>Copying code without checking object lifetime and ownership.</li>
-                    <li>Skipping the challenge before testing the concept in code.</li>
+                    <li>Dereferencing before checking for a valid target.</li>
+                    <li>Confusing an address with the value stored there.</li>
+                    <li>Using raw owning pointers when smart pointers are clearer.</li>
                   </ul>
                 </div>
                 <div className="oops-brief-card oops-brief-wide">
                   <span className="oops-interactive-label">Practice</span>
-                  <h3>Before the challenge, answer these</h3>
+                  <h3>Before the challenge, verify these</h3>
                   <ul>
                     {practicePrompts.map((item) => (
                       <li key={item.id}>{item.label}</li>
                     ))}
                   </ul>
                 </div>
-                <div className="oops-brief-card oops-brief-wide">
-                  <span className="oops-interactive-label">Mini Quiz</span>
-                  <h3>Check yourself</h3>
-                  <ul>
-                    <li>What data should belong inside the object?</li>
-                    <li>Which function is the safest public interface for that data?</li>
-                    <li>What would break if this design grew to ten objects?</li>
-                  </ul>
-                </div>
               </div>
-              {lesson.theory.map((block, i) => (
+
+              {lesson.theory.map((block, index) => (
                 <ConceptCard
-                  key={i}
+                  key={index}
                   block={block}
                   accentColor={lesson.chapterColor}
                 />
               ))}
+
               <div className="oops-notes-panel">
                 <div>
                   <span className="oops-interactive-label">Lesson Notes</span>
-                  <h3>Capture your mental model</h3>
+                  <h3>Capture your pointer rule</h3>
                 </div>
                 <textarea
                   value={noteDraft}
-                  onChange={(e) => setNoteDraft(e.target.value)}
-                  placeholder="Write a short note, gotcha, or example you want to remember..."
+                  onChange={(event) => setNoteDraft(event.target.value)}
+                  placeholder="Write a pointer rule, gotcha, address trace, or safety note..."
                 />
                 <button type="button" onClick={handleSaveNote}>
                   Save Note
                 </button>
               </div>
+
               <div className="oops-confidence-panel">
                 <div>
                   <span className="oops-interactive-label">Confidence Check</span>
-                  <h3>How well did this click?</h3>
+                  <h3>Can you trace the memory?</h3>
                 </div>
                 <div className="oops-confidence-options">
                   {[
@@ -386,11 +368,9 @@ export default function LessonPage() {
                   ))}
                 </div>
               </div>
+
               <div className="oops-theory-footer">
-                <button
-                  className="oops-cta-btn"
-                  onClick={() => setTab("challenge")}
-                >
+                <button className="oops-cta-btn" onClick={() => setTab("challenge")}>
                   Ready? Take the Challenge →
                 </button>
               </div>
@@ -407,12 +387,11 @@ export default function LessonPage() {
           )}
         </div>
 
-        {/* Prev / Next nav */}
         <div className="oops-lesson-nav">
           {prev ? (
             <button
               className="oops-nav-btn"
-              onClick={() => navigate(`/learn/oops-cpp/lesson/${prev.id}`)}
+              onClick={() => navigate(`${BASE_PATH}/lesson/${prev.id}`)}
             >
               ← {prev.title}
             </button>
@@ -422,14 +401,14 @@ export default function LessonPage() {
           {next ? (
             <button
               className="oops-nav-btn oops-nav-next"
-              onClick={() => navigate(`/learn/oops-cpp/lesson/${next.id}`)}
+              onClick={() => navigate(`${BASE_PATH}/lesson/${next.id}`)}
             >
               {next.title} →
             </button>
           ) : (
             <button
               className="oops-nav-btn oops-nav-next"
-              onClick={() => navigate("/learn/oops-cpp")}
+              onClick={() => navigate(BASE_PATH)}
             >
               Finish Module →
             </button>

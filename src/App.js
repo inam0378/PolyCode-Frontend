@@ -11,6 +11,7 @@ import Navbar from "./features/navigation/components/Navbar";
 import Sidebar from "./features/navigation/components/Sidebar";
 import { PlaygroundProvider } from "./features/playground/context/PlaygroundContext";
 import { AuthProvider } from "./features/auth/context/AuthContext";
+import SelectionPins from "./shared/components/SelectionPins";
 import "./App.css";
 import "./styles/theme-light.css";
 import "./styles/stack-picker-dark.css";
@@ -18,6 +19,9 @@ import "./styles/responsive.css";
 
 const LanguageSelectPage = lazy(
   () => import("./features/language/pages/LanguageSelectPage"),
+);
+const LanguageLandingPage = lazy(
+  () => import("./features/language/pages/LanguageLandingPage"),
 );
 const HomePage = lazy(() => import("./features/docs/pages/Home/HomePage"));
 const DocumentPage = lazy(() => import("./features/docs/pages/DocumentPage"));
@@ -29,11 +33,18 @@ const PlaygroundPage = lazy(
 const LoginPage = lazy(() => import("./features/auth/pages/LoginPage"));
 const SignupPage = lazy(() => import("./features/auth/pages/SignupPage"));
 const DailyChallenge = lazy(() => import("./pages/DailyChallenges"));
+const ProfilePage = lazy(() => import("./features/profile/ProfilePage"));
 
 // Learn — OOP C++ pages
 const OopsHub = lazy(() => import("./features/learn/oops-cpp/pages/OopsHub"));
 const LessonPage = lazy(
   () => import("./features/learn/oops-cpp/pages/LessonPage"),
+);
+const PointersHub = lazy(
+  () => import("./features/learn/pointers-cpp/pages/PointersHub"),
+);
+const PointersLessonPage = lazy(
+  () => import("./features/learn/pointers-cpp/pages/PointersLessonPage"),
 );
 
 const PageFallback = () => (
@@ -43,6 +54,54 @@ const PageFallback = () => (
     </div>
   </div>
 );
+
+function AppFooter() {
+  return (
+    <footer className="app-footer">
+      <div className="app-footer-inner">
+        <a
+          className="app-footer-brand"
+          href="https://www.quantumlogicslimited.com"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Quantum Logics"
+        >
+          <img
+            src="https://www.quantumlogicslimited.com/logo.png"
+            alt="Quantum Logics logo"
+            className="app-footer-logo"
+          />
+          <span>Quantum Logics</span>
+        </a>
+        <span className="app-footer-divider" />
+        <span className="app-footer-project">Polycode</span>
+      </div>
+    </footer>
+  );
+}
+
+function ScrollToTop() {
+  const { pathname, search } = useLocation();
+
+  React.useLayoutEffect(() => {
+    const html = document.documentElement;
+    const previousScrollBehavior = html.style.scrollBehavior;
+
+    html.style.scrollBehavior = "auto";
+    window.scrollTo(0, 0);
+    document
+      .querySelectorAll(".main-content, .learn-content")
+      .forEach((node) => {
+        node.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      });
+
+    return () => {
+      html.style.scrollBehavior = previousScrollBehavior;
+    };
+  }, [pathname, search]);
+
+  return null;
+}
 
 function MainApp({
   selectedLanguage,
@@ -132,6 +191,21 @@ function MainApp({
 }
 
 function LearnShell({ theme, onToggleTheme, onGoToStackPicker, children }) {
+  const location = useLocation();
+
+  React.useEffect(() => {
+    if (!location.pathname.startsWith("/learn/")) return;
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.querySelector(".main-content.learn-content")?.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "auto",
+      });
+    });
+  }, [location.pathname]);
+
   return (
     <>
       <Navbar
@@ -149,6 +223,7 @@ function ThemedShell({ theme, children }) {
   return (
     <div className={`app ${theme === "light" ? "theme-light" : ""}`}>
       {children}
+      <AppFooter />
     </div>
   );
 }
@@ -173,26 +248,33 @@ function StackPickerShell({ children, savedTheme }) {
     };
   }, [savedTheme]);
 
-  return <div className="app stack-picker-dark">{children}</div>;
+  return (
+    <div className="app stack-picker-dark">
+      {children}
+      <AppFooter />
+    </div>
+  );
 }
 
 function AppRoutes() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedLanguage, setSelectedLanguage] = React.useState(null);
+  const [selectedLanguage, setSelectedLanguage] = React.useState(
+    () => localStorage.getItem("selectedLanguage") || null,
+  );
   const [theme, setTheme] = React.useState(
     () => localStorage.getItem("theme") || "dark",
   );
 
-  React.useEffect(() => {
-    localStorage.removeItem("selectedLanguage");
-    sessionStorage.removeItem("selectedLanguage");
-  }, []);
-
   const handleLanguageSelect = React.useCallback(
-    (language) => {
+    (language, options = {}) => {
       setSelectedLanguage(language);
-      navigate("/hub", { replace: true });
+      localStorage.setItem("selectedLanguage", language);
+      if (!options.stay) {
+        navigate(`/language/${encodeURIComponent(language)}`, {
+          replace: true,
+        });
+      }
     },
     [navigate],
   );
@@ -245,6 +327,23 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/language/:language"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onToggleTheme={toggleTheme}
+                onGoToStackPicker={goToStackPicker}
+              >
+                <LanguageLandingPage
+                  selectedLanguage={selectedLanguage}
+                  onLanguageSelect={handleLanguageSelect}
+                />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
+        <Route
           path="/learn/oops-cpp"
           element={
             <ThemedShell theme={theme}>
@@ -287,6 +386,62 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/learn/pointers-cpp"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onToggleTheme={toggleTheme}
+                onGoToStackPicker={goToStackPicker}
+              >
+                <PointersHub />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
+        <Route
+          path="/learn/pointers-cpp/lesson/:lessonId"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onToggleTheme={toggleTheme}
+                onGoToStackPicker={goToStackPicker}
+              >
+                <PointersLessonPage />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
+        <Route
+          path="/learn/pointers-cpp/:lessonId"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onToggleTheme={toggleTheme}
+                onGoToStackPicker={goToStackPicker}
+              >
+                <PointersLessonPage />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onToggleTheme={toggleTheme}
+                onGoToStackPicker={goToStackPicker}
+              >
+                <ProfilePage />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
+        <Route
           path="/*"
           element={
             <ThemedShell theme={theme}>
@@ -314,6 +469,8 @@ function App() {
     <AuthProvider>
       <PlaygroundProvider>
         <Router>
+          <SelectionPins />
+          <ScrollToTop />
           <AppRoutes />
         </Router>
       </PlaygroundProvider>

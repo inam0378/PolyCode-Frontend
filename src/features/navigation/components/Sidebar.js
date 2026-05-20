@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, memo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getTree, getLanguages } from "../../docs/services/api";
 import { formatName } from "../../../shared/utils/format";
+import { toDocRoute } from "../../../shared/utils/docPaths";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 const FolderIcon = ({ color = "currentColor" }) => (
@@ -97,7 +98,9 @@ const SidebarTreeNode = memo(function SidebarTreeNode({
     );
   }
 
-  const to = `/doc/${node.path}${selectedLanguage ? `?language=${selectedLanguage}` : ""}`;
+  const to = `${toDocRoute(node.path)}${
+    selectedLanguage ? `?language=${encodeURIComponent(selectedLanguage)}` : ""
+  }`;
   const active = activePath === `/doc/${node.path}`;
 
   return (

@@ -1176,10 +1176,36 @@ int main() {
     return 0;
 }`,
           tests: [
-            { id: 1, label: "Shape constructor takes color" },
-            { id: 2, label: "Circle calls Shape constructor" },
-            { id: 3, label: "area() returns π * r²" },
-            { id: 4, label: "describe() output is correct" },
+            {
+              id: 1,
+              label: "Shape constructor takes color",
+              keywords: ["class Shape", { pattern: "Shape\\s*\\([^)]*string\\s+[A-Za-z_]\\w*" }],
+            },
+            {
+              id: 2,
+              label: "Circle stores and initializes radius",
+              keywords: ["class Circle", "double radius", { pattern: "radius\\s*\\([^)]*[A-Za-z_]\\w*\\)" }],
+            },
+            {
+              id: 3,
+              label: "Circle calls Shape constructor",
+              keywords: [{ pattern: "Circle\\s*\\([^)]*\\)\\s*:\\s*Shape\\s*\\(" }],
+            },
+            {
+              id: 4,
+              label: "area() returns π * radius²",
+              keywords: ["area", { pattern: "return[\\s\\S]*radius\\s*\\*\\s*radius" }],
+            },
+            {
+              id: 5,
+              label: "describe() prints color and area()",
+              keywords: ["describe", "circle with area", { pattern: "<<\\s*area\\s*\\(" }],
+            },
+            {
+              id: 6,
+              label: "Red circle with radius 5 is tested",
+              keywords: [{ pattern: "Circle\\s+[A-Za-z_]\\w*\\s*\\([^;]*red[^;]*5(?:\\.0)?[^;]*\\)" }],
+            },
           ],
         },
       },
