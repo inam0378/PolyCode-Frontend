@@ -97,6 +97,16 @@
   --cyan-dim: rgba(14, 116, 144, 0.1);
   --bg-card: #ffffff;
   --ink-1: #f8fafc;
+  --vscode-bg: #f8fafc;
+  --vscode-panel: #ffffff;
+  --vscode-panel-2: #f1f5f9;
+  --vscode-border: rgba(15, 23, 42, 0.12);
+  --vscode-text: #0f172a;
+  --vscode-muted: #64748b;
+  --vscode-blue: #2563eb;
+  --vscode-blue-2: #0ea5e9;
+  --vscode-green: #047857;
+  --vscode-orange: #c2410c;
   --shadow-sm:
     0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 14px rgba(15, 23, 42, 0.05);
   --shadow-md:
@@ -5040,6 +5050,38 @@ body {
   border-radius: 3px;
   background: #161b22;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.045);
+}
+
+.profile-activity-cell {
+  cursor: pointer;
+  transition:
+    transform 0.12s,
+    box-shadow 0.12s;
+}
+
+.profile-activity-cell:hover,
+.profile-activity-cell:focus-visible {
+  transform: scale(1.35);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 0 0 3px rgba(14, 165, 233, 0.16);
+  outline: none;
+}
+
+.profile-activity-tooltip {
+  position: fixed;
+  z-index: 9999;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  padding: 7px 9px;
+  border: 1px solid rgba(125, 211, 252, 0.26);
+  border-radius: 7px;
+  background: rgba(3, 7, 18, 0.94);
+  color: var(--txt-0, #f0f0ff);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.34);
+  font-size: 0.76rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .profile-activity-cell[data-level="1"],

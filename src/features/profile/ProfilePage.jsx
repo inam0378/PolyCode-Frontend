@@ -10,7 +10,7 @@ import {
 import usePointersProgress from "../learn/pointers-cpp/hooks/usePointersProgress";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const ACTIVITY_DAYS = 112;
+const MIN_ACTIVITY_DAYS = 30;
 
 function toDateKey(value) {
   const date = value ? new Date(value) : null;
@@ -18,22 +18,29 @@ function toDateKey(value) {
   return date.toISOString().slice(0, 10);
 }
 
-function buildActivityDays(...progressMaps) {
+function getResponsiveActivityDays(width = 0) {
+  if (width < 560) return 30;
+  if (width < 860) return 60;
+  const columns = Math.max(9, Math.floor((width - 4) / 17));
+  return Math.min(365, Math.max(MIN_ACTIVITY_DAYS, columns * 7));
+}
+
+function buildActivityDays(dayCount, ...progressMaps) {
   const counts = new Map();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayKey = today.toISOString().slice(0, 10);
 
   progressMaps.forEach((progress) => {
     Object.values(progress).forEach((item) => {
-      const key = toDateKey(item?.at || item?.completedAt || item);
-      if (!key) return;
+      const key = toDateKey(item?.at || item?.completedAt || item) || todayKey;
       counts.set(key, (counts.get(key) || 0) + 1);
     });
   });
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const start = new Date(today.getTime() - (ACTIVITY_DAYS - 1) * DAY_MS);
+  const start = new Date(today.getTime() - (dayCount - 1) * DAY_MS);
 
-  return Array.from({ length: ACTIVITY_DAYS }, (_, index) => {
+  return Array.from({ length: dayCount }, (_, index) => {
     const date = new Date(start.getTime() + index * DAY_MS);
     const key = date.toISOString().slice(0, 10);
     const count = counts.get(key) || 0;
@@ -59,6 +66,16 @@ function levelForCount(count) {
 function ActivityGraph({ days }) {
   const activeDays = days.filter((day) => day.count > 0).length;
   const totalCompletions = days.reduce((sum, day) => sum + day.count, 0);
+  const [tooltip, setTooltip] = React.useState(null);
+
+  const showTooltip = (event, day) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setTooltip({
+      x: rect.left + rect.width / 2,
+      y: rect.top - 10,
+      text: `${day.label}: ${day.count} lesson${day.count === 1 ? "" : "s"} done`,
+    });
+  };
 
   return (
     <section className="profile-activity-card">
@@ -75,12 +92,28 @@ function ActivityGraph({ days }) {
             key={day.key}
             className="profile-activity-cell"
             data-level={levelForCount(day.count)}
-            title={`${day.label}: ${day.count} lesson${day.count === 1 ? "" : "s"}`}
+            aria-label={`${day.label}: ${day.count} lesson${day.count === 1 ? "" : "s"} done`}
+            tabIndex={0}
+            onMouseEnter={(event) => showTooltip(event, day)}
+            onMouseLeave={() => setTooltip(null)}
+            onFocus={(event) => showTooltip(event, day)}
+            onBlur={() => setTooltip(null)}
           />
         ))}
       </div>
+      {tooltip && (
+        <div
+          className="profile-activity-tooltip"
+          style={{
+            left: tooltip.x,
+            top: tooltip.y,
+          }}
+        >
+          {tooltip.text}
+        </div>
+      )}
       <div className="profile-activity-footer">
-        <span>{activeDays} active days in the last {ACTIVITY_DAYS} days</span>
+        <span>{activeDays} active days in the last {days.length} days</span>
         <div className="profile-activity-legend" aria-hidden="true">
           <span>Less</span>
           {[0, 1, 2, 3, 4].map((level) => (
@@ -171,7 +204,25 @@ export default function ProfilePage() {
     Object.keys(pointers.completedMap).length;
   const totalLessons = ALL_LESSONS.length + POINTER_LESSONS.length;
   const totalPct = Math.round((totalCompleted / totalLessons) * 100) || 0;
-  const activityDays = buildActivityDays(oops.completedMap, pointers.completedMap);
+  const [activityWidth, setActivityWidth] = React.useState(0);
+  const activityWrapRef = React.useRef(null);
+  const activityDayCount = getResponsiveActivityDays(activityWidth);
+  const activityDays = React.useMemo(
+    () => buildActivityDays(activityDayCount, oops.completedMap, pointers.completedMap),
+    [activityDayCount, oops.completedMap, pointers.completedMap],
+  );
+
+  React.useEffect(() => {
+    const node = activityWrapRef.current;
+    if (!node) return undefined;
+
+    const updateWidth = () => setActivityWidth(node.getBoundingClientRect().width);
+    updateWidth();
+
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <main className="profile-page">
@@ -209,7 +260,9 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      <ActivityGraph days={activityDays} />
+      <div ref={activityWrapRef}>
+        <ActivityGraph days={activityDays} />
+      </div>
 
       <div className="profile-track-grid">
         <TrackProgressCard
