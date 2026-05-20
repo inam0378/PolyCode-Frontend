@@ -133,6 +133,148 @@ export default function CodeChallenge({
     return trimmed;
   }
 
+  function splitArgs(value = "") {
+    const args = [];
+    let current = "";
+    let quote = null;
+
+    for (const char of value) {
+      if ((char === '"' || char === "'") && quote === null) quote = char;
+      else if (char === quote) quote = null;
+
+      if (char === "," && quote === null) {
+        args.push(current.trim());
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+
+    if (current.trim()) args.push(current.trim());
+    return args;
+  }
+
+  function getParamNames(params = "") {
+    return splitArgs(params)
+      .map((param) =>
+        param
+          .replace(/=.*$/, "")
+          .trim()
+          .split(/\s+/)
+          .pop()
+          ?.replace(/[&*]/g, ""),
+      )
+      .filter(Boolean);
+  }
+
+  function resolveToken(token, values, params = new Map()) {
+    const cleanToken = token.trim().replace(/;$/, "");
+    if (params.has(cleanToken)) return params.get(cleanToken);
+    if (values.has(cleanToken)) return values.get(cleanToken);
+    return cleanLiteral(cleanToken);
+  }
+
+  function collectObjectOutput(source, baseValues) {
+    const output = [];
+    const classDefs = [];
+    const classRegex = /class\s+([A-Za-z_]\w*)\s*\{([\s\S]*?)\};/g;
+
+    for (const classMatch of source.matchAll(classRegex)) {
+      const [, className, classBody] = classMatch;
+      const constructorRegex = new RegExp(
+        `${className}\\s*\\(([^)]*)\\)\\s*(?::\\s*([^{}]*))?\\s*\\{([\\s\\S]*?)\\}`,
+        "g",
+      );
+      const constructors = [...classBody.matchAll(constructorRegex)].map(
+        (match) => ({
+          params: getParamNames(match[1]),
+          initializers: match[2] || "",
+          body: match[3] || "",
+        }),
+      );
+      const methodRegex =
+        /\b(?:void|int|double|float|string|bool|auto)\s+([A-Za-z_]\w*)\s*\([^)]*\)\s*(?:const)?\s*\{([\s\S]*?)\}/g;
+      const methods = new Map(
+        [...classBody.matchAll(methodRegex)].map((match) => [
+          match[1],
+          match[2] || "",
+        ]),
+      );
+
+      classDefs.push({ className, constructors, methods });
+    }
+
+    classDefs.forEach(({ className, constructors, methods }) => {
+      const objectRegex = new RegExp(
+        `\\b${className}\\s+([A-Za-z_]\\w*)\\s*\\(([^;]*)\\)\\s*;`,
+        "g",
+      );
+
+      for (const objectMatch of source.matchAll(objectRegex)) {
+        const [, objectName, rawArgs] = objectMatch;
+        const args = splitArgs(rawArgs).map((arg) =>
+          resolveToken(arg, baseValues),
+        );
+        const constructor =
+          constructors.find((item) => item.params.length === args.length) ||
+          constructors[0];
+        const memberValues = new Map();
+        const paramValues = new Map();
+
+        constructor?.params.forEach((param, index) => {
+          paramValues.set(param, args[index] ?? "");
+        });
+
+        const initializerRegex = /([A-Za-z_]\w*)\s*\(([^)]*)\)/g;
+        for (const initMatch of (constructor?.initializers || "").matchAll(
+          initializerRegex,
+        )) {
+          memberValues.set(
+            initMatch[1],
+            resolveToken(initMatch[2], baseValues, paramValues),
+          );
+        }
+
+        const assignmentRegex =
+          /(?:this->)?([A-Za-z_]\w*)\s*=\s*("[^"]*"|'[^']*'|[A-Za-z_]\w*|[-+]?\d+(?:\.\d+)?)/g;
+        for (const assignmentMatch of (constructor?.body || "").matchAll(
+          assignmentRegex,
+        )) {
+          memberValues.set(
+            assignmentMatch[1],
+            resolveToken(assignmentMatch[2], baseValues, paramValues),
+          );
+        }
+
+        memberValues.forEach((value, key) => {
+          baseValues.set(key, value);
+          baseValues.set(`${objectName}.${key}`, value);
+        });
+
+        const callRegex = new RegExp(
+          `\\b${objectName}\\.([A-Za-z_]\\w*)\\s*\\(\\s*\\)\\s*;`,
+          "g",
+        );
+        for (const callMatch of source.matchAll(callRegex)) {
+          const methodBody = methods.get(callMatch[1]);
+          if (!methodBody) continue;
+
+          methodBody.split("\n").forEach((rawLine) => {
+            const line = rawLine.split("//")[0];
+            if (!line.includes("cout")) return;
+            const rendered = line
+              .split("<<")
+              .map((part) => renderCoutPart(part, baseValues))
+              .join("");
+            if (rendered) output.push(rendered);
+          });
+        }
+      }
+    });
+
+    return output;
+  }
+
   function collectKnownValues(source) {
     const values = new Map();
     const declarations =
@@ -173,9 +315,11 @@ export default function CodeChallenge({
 
   function simulateCppOutput(source = "") {
     const values = collectKnownValues(source);
-    const outputLines = [];
+    const outputLines = collectObjectOutput(source, values);
+    const mainMatch = source.match(/\bint\s+main\s*\([^)]*\)\s*\{([\s\S]*)\}\s*$/);
+    const directOutputSource = mainMatch ? mainMatch[1] : source;
 
-    source.split("\n").forEach((rawLine) => {
+    directOutputSource.split("\n").forEach((rawLine) => {
       const line = rawLine.split("//")[0];
       if (!line.includes("cout")) return;
       const rendered = line
