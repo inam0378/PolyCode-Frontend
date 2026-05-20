@@ -16,6 +16,7 @@ export default function CodeChallenge({
 }) {
   const [code, setCode] = useState(initialCode || challenge.starterCode);
   const [results, setResults] = useState(null); // null | { passed, tests }
+  const [output, setOutput] = useState(null);
   const [showSolution, setShowSolution] = useState(false);
   const [running, setRunning] = useState(false);
   const activeChallengeId = useRef(challenge.id);
@@ -27,6 +28,7 @@ export default function CodeChallenge({
       activeChallengeId.current = challenge.id;
       setCode(initialCode || challenge.starterCode);
       setResults(null);
+      setOutput(null);
       setShowSolution(false);
       return;
     }
@@ -43,6 +45,11 @@ export default function CodeChallenge({
   function runTests() {
     setRunning(true);
     setResults(null);
+    setOutput({
+      status: "running",
+      stdout: "Running checks...",
+      expected: simulateCppOutput(challenge.solutionCode),
+    });
 
     setTimeout(() => {
       const testResults = challenge.tests.map((test) => {
@@ -57,6 +64,15 @@ export default function CodeChallenge({
 
       const allPassed = testResults.every((t) => t.passed);
       setResults({ passed: allPassed, tests: testResults });
+      setOutput({
+        status: allPassed ? "pass" : "fail",
+        stdout:
+          simulateCppOutput(code) ||
+          (allPassed
+            ? simulateCppOutput(challenge.solutionCode)
+            : "No console output detected yet. Add cout statements, then run again."),
+        expected: simulateCppOutput(challenge.solutionCode),
+      });
       if (allPassed && !isCompleted) {
         Promise.resolve(onComplete()).catch((error) => {
           console.error("Unable to save lesson progress:", error);
@@ -101,10 +117,82 @@ export default function CodeChallenge({
     }
   }
 
+  function cleanLiteral(value = "") {
+    const trimmed = value.trim();
+    if (
+      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    ) {
+      return trimmed
+        .slice(1, -1)
+        .replace(/\\n/g, "\n")
+        .replace(/\\t/g, "\t")
+        .replace(/\\"/g, '"')
+        .replace(/\\'/g, "'");
+    }
+    return trimmed;
+  }
+
+  function collectKnownValues(source) {
+    const values = new Map();
+    const declarations =
+      /\b(?:string|int|double|float|char|bool|auto)\s+([A-Za-z_]\w*)\s*=\s*("[^"]*"|'[^']*'|[-+]?\d+(?:\.\d+)?|true|false)/g;
+    const memberAssignments =
+      /\b([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*=\s*("[^"]*"|'[^']*'|[-+]?\d+(?:\.\d+)?|true|false)/g;
+    const assignments =
+      /\b([A-Za-z_]\w*)\s*=\s*("[^"]*"|'[^']*'|[-+]?\d+(?:\.\d+)?|true|false)/g;
+
+    for (const match of source.matchAll(declarations)) {
+      values.set(match[1], cleanLiteral(match[2]));
+    }
+    for (const match of source.matchAll(memberAssignments)) {
+      values.set(`${match[1]}.${match[2]}`, cleanLiteral(match[3]));
+    }
+    for (const match of source.matchAll(assignments)) {
+      if (!values.has(match[1])) values.set(match[1], cleanLiteral(match[2]));
+    }
+
+    return values;
+  }
+
+  function renderCoutPart(part, values) {
+    const token = part.trim().replace(/;$/, "");
+    if (!token || token === "cout") return "";
+    if (token === "endl") return "\n";
+    if (token === '"\\n"' || token === "'\\n'") return "\n";
+    if (
+      (token.startsWith('"') && token.endsWith('"')) ||
+      (token.startsWith("'") && token.endsWith("'"))
+    ) {
+      return cleanLiteral(token);
+    }
+    if (/^[-+]?\d+(\.\d+)?$/.test(token)) return token;
+    if (values.has(token)) return values.get(token);
+    return "";
+  }
+
+  function simulateCppOutput(source = "") {
+    const values = collectKnownValues(source);
+    const outputLines = [];
+
+    source.split("\n").forEach((rawLine) => {
+      const line = rawLine.split("//")[0];
+      if (!line.includes("cout")) return;
+      const rendered = line
+        .split("<<")
+        .map((part) => renderCoutPart(part, values))
+        .join("");
+      if (rendered) outputLines.push(rendered);
+    });
+
+    return outputLines.join("").trim();
+  }
+
   function resetCode() {
     setCode(challenge.starterCode);
     onCodeChange?.(challenge.starterCode);
     setResults(null);
+    setOutput(null);
     setShowSolution(false);
   }
 
@@ -144,6 +232,26 @@ export default function CodeChallenge({
               )}
             </div>
           ))}
+        </div>
+
+        <div
+          className={`oops-output-panel ${
+            output?.status ? `oops-output-${output.status}` : ""
+          }`}
+        >
+          <div className="oops-output-head">
+            <span>Output</span>
+            <small>{output ? "after last run" : "waiting for run"}</small>
+          </div>
+          <pre className="oops-output-body">
+            {output?.stdout || "Run your code to see console output here."}
+          </pre>
+          {output?.expected && (
+            <div className="oops-expected-output">
+              <span>Expected</span>
+              <code>{output.expected}</code>
+            </div>
+          )}
         </div>
       </div>
 
