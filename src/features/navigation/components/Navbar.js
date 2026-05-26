@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth/context/AuthContext";
 import { getLearnNavLinks } from "../../language/courseCatalog";
+import ProfileAvatar from "../../profile/components/ProfileAvatar";
 
 export default function Navbar({
   toggleSidebar,
@@ -179,13 +180,7 @@ export default function Navbar({
               aria-label="User menu"
               title={user.username}
             >
-              <span className="navbar-avatar-initials">
-                {(
-                  user.firstName?.[0] ||
-                  user.username?.[0] ||
-                  "?"
-                ).toUpperCase()}
-              </span>
+              <ProfileAvatar user={user} size="sm" className="navbar-avatar-inner" />
             </button>
 
             {dropdownOpen && (

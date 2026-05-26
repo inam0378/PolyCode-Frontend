@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ProfileAvatar from "../../profile/components/ProfileAvatar";
 
 export default function LearnProfileMenu({
   user,
@@ -15,10 +16,6 @@ export default function LearnProfileMenu({
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const pct = Math.round((completedCount / totalLessons) * 100) || 0;
-  const initials = user
-    ? (user.firstName?.[0] || user.username?.[0] || "U").toUpperCase()
-    : "G";
-
   return (
     <div className="learn-profile-menu">
       <button
@@ -28,13 +25,15 @@ export default function LearnProfileMenu({
         aria-expanded={open}
         aria-label="Open learning profile"
       >
-        <span>{initials}</span>
+        <ProfileAvatar user={user} size="sm" />
       </button>
 
       {open && (
         <div className="learn-profile-popover">
           <div className="learn-profile-head">
-            <div className="learn-profile-avatar">{initials}</div>
+            <div className="learn-profile-avatar">
+              <ProfileAvatar user={user} size="sm" />
+            </div>
             <div>
               <strong>{user?.username || "Guest learner"}</strong>
               <small>{trackTitle}</small>

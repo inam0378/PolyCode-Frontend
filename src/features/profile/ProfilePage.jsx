@@ -1,6 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth/context/AuthContext";
+import ProfileEditSection from "./components/ProfileEditSection";
+import ProfileHero from "./components/ProfileHero";
 import { ALL_LESSONS, TOTAL_XP } from "../learn/oops-cpp/data/oopsCurriculum";
 import useOopsProgress from "../learn/oops-cpp/hooks/useOopsProgress";
 import {
@@ -203,13 +205,11 @@ function TrackProgressCard({
 }
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const [editOpen, setEditOpen] = React.useState(false);
   const oops = useOopsProgress();
   const pointers = usePointersProgress();
   const numpy = useNumpyProgress();
-  const initials = user
-    ? (user.firstName?.[0] || user.username?.[0] || "U").toUpperCase()
-    : "G";
   const totalCompleted =
     Object.keys(oops.completedMap).length +
     Object.keys(pointers.completedMap).length +
@@ -263,18 +263,18 @@ export default function ProfilePage() {
 
   return (
     <main className="profile-page">
-      <section className="profile-hero">
-        <div className="profile-hero-avatar">{initials}</div>
-        <div>
-          <span className="profile-kicker">Learner Profile</span>
-          <h1>{user?.username || "Guest learner"}</h1>
-          <p>{user?.email || "Progress is saved locally on this device."}</p>
-        </div>
-        <div className="profile-total-progress">
-          <span>Current Streak</span>
-          <strong>{totalStreak} days</strong>
-        </div>
-      </section>
+      <ProfileHero
+        user={user}
+        isAuthenticated={isAuthenticated}
+        totalStreak={totalStreak}
+        editOpen={editOpen}
+        onToggleEdit={() => setEditOpen((open) => !open)}
+      />
+
+      <ProfileEditSection
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+      />
 
       <section className="profile-overview-grid">
         <div>

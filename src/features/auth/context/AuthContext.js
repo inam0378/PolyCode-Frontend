@@ -37,6 +37,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   /** Fetch current user from the backend using the stored token */
   const fetchMe = useCallback(async (storedToken) => {
@@ -109,6 +110,43 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  const updateProfile = useCallback(
+    async (payload) => {
+      const userId = user?._id || user?.id;
+      if (!token || !userId) {
+        throw new Error("You must be signed in to update your profile");
+      }
+      const { updateProfile: updateProfileApi } = await import(
+        "../../profile/services/profileApi"
+      );
+      const data = await updateProfileApi(token, userId, payload);
+      setUser(data.user);
+      return data.user;
+    },
+    [token, user],
+  );
+
+  const uploadAvatar = useCallback(
+    async (imageBase64) => {
+      const userId = user?._id || user?.id;
+      if (!token || !userId) {
+        throw new Error("You must be signed in to upload a profile picture");
+      }
+      setAvatarPreview(imageBase64);
+      try {
+        const { uploadProfileAvatar } = await import(
+          "../../profile/services/profileApi"
+        );
+        const data = await uploadProfileAvatar(token, userId, imageBase64);
+        setUser(data.user);
+        return data.user;
+      } finally {
+        setAvatarPreview(null);
+      }
+    },
+    [token, user],
+  );
+
   const isAuthenticated = !loading && Boolean(user && token);
 
   return (
@@ -121,6 +159,9 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
+        updateProfile,
+        uploadAvatar,
+        avatarPreview,
       }}
     >
       {children}
