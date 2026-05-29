@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ConceptCard from "../../oops-cpp/components/ConceptCard";
+import NumpyIntroTheory from "../components/NumpyIntroTheory";
 import OopsSidebar from "../../oops-cpp/components/OopsSidebar";
 import LearnProfileMenu from "../../shared/LearnProfileMenu";
 import PythonCodeChallenge from "../components/PythonCodeChallenge";
@@ -127,6 +128,7 @@ export default function NumpyLessonPage() {
   }
 
   const isCompleted = isAuthenticated && !!progress[lessonId];
+  const isIntroChapter = lesson.chapterId === "intro";
   const isBookmarked = bookmarks.includes(lessonId);
   const completedCount = Object.keys(progress).length;
   const earnedXP = NUMPY_LESSONS.filter((item) => progress[item.id]).reduce(
@@ -231,6 +233,17 @@ export default function NumpyLessonPage() {
 
         <div className="oops-lesson-content">
           {tab === "theory" ? (
+            isIntroChapter ? (
+              <NumpyIntroTheory
+                lesson={lesson}
+                noteDraft={noteDraft}
+                onNoteChange={setNoteDraft}
+                onSaveNote={handleSaveNote}
+                confidence={confidence}
+                onConfidenceChange={handleConfidenceChange}
+                onGoChallenge={() => setTab("challenge")}
+              />
+            ) : (
             <div className="oops-theory-pane">
               <div className="oops-lesson-title-row">
                 <div>
@@ -362,6 +375,7 @@ export default function NumpyLessonPage() {
                 </button>
               </div>
             </div>
+            )
           ) : (
             <PythonCodeChallenge
               challenge={lesson.challenge}

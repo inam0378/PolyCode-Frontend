@@ -16,74 +16,74 @@ export const NUMPY_CHAPTERS = [
           {
             type: "text",
             content:
-              "**NumPy** (Numerical Python) is a free library that helps you work with large sets of numbers in Python — think step counts from a fitness band, pixel brightness in a photo, or prices on a shopping site.",
+              "**NumPy** (say: “num-pie”) is a free Python tool for working with **lots of numbers at once**. If you ever add up test scores, daily steps, or prices in a list — NumPy makes that fast and easy.",
           },
           {
             type: "text",
             content:
-              "Its main building block is the **ndarray**: a grid of numbers stored efficiently. Once your data is in an ndarray, you can add, multiply, or compare whole chunks in one step instead of writing long loops.",
+              "The main thing NumPy gives you is an **ndarray** (a number array). Think of it like a neat row or table of numbers — not mixed with text, just numbers ready for math.",
           },
           {
             type: "diagram",
-            title: "Where NumPy shows up",
+            title: "Where people use NumPy",
             nodes: [
               {
-                id: "science",
-                label: "Science & school",
+                id: "school",
+                label: "School & homework",
                 color: "#4f46e5",
-                items: ["Physics formulas", "Statistics homework"],
+                items: ["Averages and grades", "Simple statistics"],
               },
               {
-                id: "data",
-                label: "Data & charts",
+                id: "apps",
+                label: "Apps you use",
                 color: "#6366f1",
-                items: ["pandas tables", "matplotlib plots"],
+                items: ["Charts and graphs", "Spreadsheet-style data"],
               },
               {
-                id: "ml",
-                label: "AI & games",
+                id: "future",
+                label: "Later in your journey",
                 color: "#8b5cf6",
-                items: ["Neural networks", "Random game levels"],
+                items: ["Data science", "Machine learning basics"],
               },
             ],
           },
           {
             type: "code",
             lang: "python",
-            label: "Install habit: import numpy as np",
+            label: "Add 500 steps to each day in one line",
             content: `import numpy as np
 
 steps = np.array([4000, 5200, 6100])
-print(steps + 500)   # bonus steps added to each day`,
+print(steps + 500)   # every day gets +500`,
           },
           {
             type: "code",
             lang: "python",
-            label: "A tiny 2D table (rows and columns)",
+            label: "A small table: rows = students, columns = subjects",
             content: `import numpy as np
 
-# Each row = one student, each column = one subject
-grades = np.array([[78, 85], [92, 88]])
-print(grades.shape)   # (2, 2) → 2 students, 2 subjects`,
+grades = np.array([[78, 85],
+                   [92, 88]])
+print(grades.shape)   # (2, 2) = 2 rows, 2 columns`,
           },
           {
             type: "callout",
             variant: "tip",
             content:
-              "Almost every data-heavy Python project uses `import numpy as np`. You will use that line in every lesson in this course.",
+              "You'll almost always start with `import numpy as np`. The nickname `np` is used everywhere — it's the standard shortcut.",
           },
           {
             type: "quiz",
-            question: "What does NumPy mainly give you for numeric work?",
+            question: "What is NumPy best at?",
             options: [
-              "Faster loops in plain Python lists",
-              "ndarrays and vectorized math on many values at once",
-              "A way to store text in Excel",
-              "Built-in web servers",
+              "Writing website HTML",
+              "Doing math on many numbers quickly",
+              "Sending emails",
+              "Drawing UI buttons",
             ],
             answer: 1,
             explanation:
-              "NumPy centers on ndarrays and operations that run on whole arrays efficiently.",
+              "NumPy is built for numeric arrays and fast math on whole groups of numbers.",
           },
         ],
         challenge: {
@@ -128,13 +128,18 @@ print(temps + 3)`,
           {
             type: "text",
             content:
-              "Imagine a **spreadsheet** full of numbers. A Python **list** is like sticky notes — flexible, can hold anything, but slow when you crunch thousands of cells. **NumPy** gives you an **ndarray**: one type, one block of memory, built for speed.",
+              "A Python **list** can hold anything: numbers, words, even other lists. That's flexible — but when you only have numbers and want to do math on hundreds of them, lists get slow and wordy.",
+          },
+          {
+            type: "text",
+            content:
+              "A NumPy **array** is like a dedicated number box: same type, stored together, built for speed. One line like `numbers * 2` doubles every value — no loop needed.",
           },
           {
             type: "callout",
             variant: "info",
             content:
-              "Use lists for mixed data and tiny scripts. Reach for NumPy when you need vector math, speed, and friends like pandas, matplotlib, and scikit-learn.",
+              "Use a **list** for small mixed data (names + ages in one list). Use a **NumPy array** when you have lots of numbers and want quick math.",
           },
           {
             type: "diagram",
@@ -144,47 +149,47 @@ print(temps + 3)`,
                 id: "list",
                 label: "Python list",
                 color: "#f43f5e",
-                items: ["Any types mixed", "Loop for math", "Flexible"],
+                items: ["Numbers, text, anything", "Need a loop for math", "Great for small tasks"],
               },
               {
                 id: "ndarray",
-                label: "NumPy ndarray",
+                label: "NumPy array",
                 color: "#4f46e5",
-                items: ["Same dtype", "Vectorized ops", "Fast C backend"],
+                items: ["Numbers of one type", "Math on the whole group", "Fast for big data"],
               },
             ],
           },
           {
             type: "code",
             lang: "python",
-            label: "Python list — loop to double",
+            label: "List way — write a loop",
             content: `numbers = [1, 2, 3, 4]
 doubled = [n * 2 for n in numbers]
-print(doubled)  # [2, 4, 6, 8]`,
+print(doubled)   # [2, 4, 6, 8]`,
           },
           {
             type: "code",
             lang: "python",
-            label: "NumPy array — one line",
+            label: "NumPy way — one line, no loop",
             content: `import numpy as np
 
 numbers = np.array([1, 2, 3, 4])
 doubled = numbers * 2
-print(doubled)  # [2 4 6 8]`,
+print(doubled)   # [2 4 6 8]`,
           },
           {
             type: "callout",
             variant: "tip",
             content:
-              "The convention is `import numpy as np`. You'll see it everywhere — it's the NumPy handshake.",
+              "Always write `import numpy as np` at the top. Everyone in the Python world uses `np` as the short name.",
           },
           {
             type: "quiz",
-            question: "What is the main NumPy container type?",
+            question: "What do we call NumPy's main number container?",
             options: ["list", "tuple", "ndarray", "dict"],
             answer: 2,
             explanation:
-              "NumPy stores numeric data in ndarrays (N-dimensional arrays), optimized for fast math.",
+              "NumPy stores numbers in an ndarray — a fast, typed number array.",
           },
         ],
         challenge: {
@@ -229,7 +234,12 @@ print(arr)`,
           {
             type: "text",
             content:
-              "Every ndarray carries a **shape** (its dimensions) and a **dtype** (element type). Think of **game scores** in a row: shape `(5,)` means five scores; dtype `int64` means whole numbers.",
+              "Every NumPy array has a **shape** — how many rows and columns it has. `[10, 20, 30]` has shape `(3,)` (three numbers in a row). A table of grades might have shape `(5, 4)` — five students, four subjects.",
+          },
+          {
+            type: "text",
+            content:
+              "**dtype** tells you what kind of number is inside: whole numbers (`int64`), decimals (`float64`), or True/False (`bool`). You don't need to memorize names — just know each array picks one type.",
           },
           {
             type: "diagram",
@@ -239,50 +249,48 @@ print(arr)`,
                 id: "shape",
                 label: "shape",
                 color: "#4f46e5",
-                items: ["(4,) → 1D length 4", "(2, 3) → 2 rows × 3 cols", "rows × columns"],
+                items: ["(3,) = 3 numbers in a row", "(2, 4) = 2 rows, 4 cols", "Like rows × columns in Excel"],
               },
               {
                 id: "dtype",
-                label: "dtype",
+                label: "dtype (data type)",
                 color: "#10b981",
-                items: ["int64", "float64", "bool"],
+                items: ["int = whole numbers", "float = decimals", "bool = True/False"],
               },
             ],
           },
           {
             type: "code",
             lang: "python",
-            label: "Inspect shape and dtype",
+            label: "Check shape and dtype",
             content: `import numpy as np
 
 scores = np.array([88, 92, 75, 100, 85])
-print(scores.shape)   # (5,)
-print(scores.dtype)   # int64 (usually)`,
+print(scores.shape)   # (5,) — five scores
+print(scores.dtype)   # usually int64`,
           },
           {
             type: "code",
             lang: "python",
-            label: "Vector math — no loop needed",
+            label: "Add 5 to every score — no loop",
             content: `import numpy as np
 
 scores = np.array([88, 92, 75, 100, 85])
-bonus = scores + 5       # add 5 to every score
-doubled = scores * 2     # double every score
-print(bonus)
-print(doubled)`,
+print(scores + 5)     # each score + 5
+print(scores * 2)     # each score doubled`,
           },
           {
             type: "callout",
             variant: "tip",
             content:
-              "Expressions like `a + 10` or `a * 2` apply to **every element at once**. That's vectorization — the heart of NumPy speed.",
+              "When you write `scores + 5`, NumPy adds 5 to **every** score at once. That one-line trick is called **vectorization** — and it's why NumPy feels like magic.",
           },
           {
             type: "quiz",
-            question: "What does `np.array([1, 2, 3]).shape` return for a 1D array?",
-            options: ["(3, 1)", "(3,)", "(1, 3)", "3"],
+            question: "An array `[1, 2, 3]` has how many numbers in its shape?",
+            options: ["(3, 1)", "(3,)", "(1, 3)", "3 alone with no comma"],
             answer: 1,
-            explanation: "A 1D array of length 3 has shape `(3,)`. The trailing comma matters!",
+            explanation: "A 1D array of length 3 has shape `(3,)`. The comma means 'one dimension'.",
           },
         ],
         challenge: {
