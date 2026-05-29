@@ -7334,3 +7334,370 @@ body {
   text-align: center;
   color: var(--txt-2, #6e7891);
 }
+
+/* ── NumPy Chapter 1 — friendly theory layout ───────────────── */
+
+.numpy-intro-theory {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.numpy-lesson-hero {
+  margin-bottom: 28px;
+  padding: 24px 26px;
+  border-radius: 14px;
+  border: 1px solid rgba(79, 70, 229, 0.35);
+  background:
+    linear-gradient(135deg, rgba(79, 70, 229, 0.14), transparent 55%),
+    rgba(255, 255, 255, 0.02);
+}
+
+.numpy-chapter-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--numpy-accent, #818cf8);
+  margin-bottom: 8px;
+}
+
+.numpy-lesson-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--txt-0, #f0f0ff);
+  margin: 0 0 12px;
+  line-height: 1.25;
+}
+
+.numpy-lesson-hook {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--txt-1, #c0c8e0);
+  margin: 0;
+}
+
+.numpy-learn-path {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.numpy-path-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.numpy-path-label span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--acid, #b8ff00);
+}
+
+.numpy-path-label small {
+  font-size: 0.75rem;
+  color: var(--txt-3, #6e7891);
+}
+
+.numpy-step-card {
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.numpy-step-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.numpy-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.numpy-step-num-code {
+  background: transparent !important;
+  font-size: 0.9rem;
+}
+
+.numpy-step-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--txt-2, #6e7891);
+}
+
+.numpy-step-text {
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: var(--txt-1, #c0c8e0);
+  margin: 0;
+}
+
+.numpy-inline-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(79, 70, 229, 0.2);
+  color: #c4b5fd;
+}
+
+.numpy-tip-box {
+  display: flex;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(184, 255, 0, 0.25);
+  background: rgba(184, 255, 0, 0.06);
+}
+
+.numpy-tip-info {
+  border-color: rgba(0, 212, 255, 0.3);
+  background: rgba(0, 212, 255, 0.06);
+}
+
+.numpy-tip-warning {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.numpy-tip-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.numpy-tip-box strong {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  color: var(--txt-0, #f0f0ff);
+}
+
+.numpy-tip-box p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--txt-1, #c0c8e0);
+}
+
+.numpy-step-code {
+  margin: 0;
+}
+
+.numpy-code-caption {
+  font-size: 0.92rem;
+  color: var(--txt-2, #6e7891);
+  margin: 0 0 10px 4px;
+}
+
+.numpy-diagram-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.numpy-diagram-item {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border-top: 3px solid var(--node-color, #4f46e5);
+}
+
+.numpy-diagram-item h4 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  color: var(--txt-0, #f0f0ff);
+}
+
+.numpy-diagram-item ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--txt-1, #c0c8e0);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.numpy-quiz-card {
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.numpy-quiz-card.correct {
+  border-color: rgba(184, 255, 0, 0.35);
+}
+
+.numpy-quiz-card.wrong {
+  border-color: rgba(255, 77, 109, 0.35);
+}
+
+.numpy-quiz-question {
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--txt-0, #f0f0ff);
+  margin: 0 0 14px;
+}
+
+.numpy-quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.numpy-quiz-option {
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--txt-1, #c0c8e0);
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.numpy-quiz-option:hover {
+  border-color: rgba(79, 70, 229, 0.45);
+}
+
+.numpy-quiz-option.selected {
+  border-color: rgba(79, 70, 229, 0.6);
+  background: rgba(79, 70, 229, 0.12);
+}
+
+.numpy-quiz-option.answer {
+  border-color: rgba(184, 255, 0, 0.5);
+  background: rgba(184, 255, 0, 0.1);
+}
+
+.numpy-quiz-feedback {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--txt-1, #c0c8e0);
+}
+
+.numpy-notes-panel,
+.numpy-confidence-panel {
+  margin-top: 28px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.numpy-notes-panel h3,
+.numpy-confidence-panel h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: var(--txt-0, #f0f0ff);
+}
+
+.numpy-notes-hint {
+  margin: 0 0 12px;
+  font-size: 0.88rem;
+  color: var(--txt-2, #6e7891);
+}
+
+.numpy-notes-panel textarea {
+  width: 100%;
+  min-height: 88px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--txt-1, #c0c8e0);
+  font-family: inherit;
+  font-size: 0.92rem;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.numpy-notes-save {
+  margin-top: 10px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(79, 70, 229, 0.85);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.numpy-confidence-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.numpy-confidence-options button {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: var(--txt-1, #c0c8e0);
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.numpy-confidence-options button.active {
+  border-color: rgba(184, 255, 0, 0.45);
+  background: rgba(184, 255, 0, 0.1);
+  color: var(--acid, #b8ff00);
+}
+
+.numpy-theory-footer {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.numpy-challenge-cta {
+  padding: 14px 28px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: #0a0a0f;
+  background: var(--numpy-accent, #818cf8);
+  transition: transform 0.15s, filter 0.15s;
+}
+
+.numpy-challenge-cta:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+@media (max-width: 640px) {
+  .numpy-lesson-title {
+    font-size: 1.4rem;
+  }
+
+  .numpy-path-label {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
