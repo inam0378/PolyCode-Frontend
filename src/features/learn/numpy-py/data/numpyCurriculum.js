@@ -1081,65 +1081,104 @@ print(grid[1])`,
           {
             type: "text",
             content:
-              "**Slicing** picks items by **position** (first, second, row 1). A **boolean mask** picks items by a **rule** — like \"only scores above 90\" or \"only even numbers\". You write a True/False test, then put it inside brackets: **`arr[arr > 90]`**.",
+              "Imagine you have **100 test scores** and want only the ones **above 90**. You could write a **for loop** and check each score one by one — but that is slow to write and slow to run. A **boolean mask** lets NumPy check **every score at once** and give you only the matches in **one line**.",
             code: {
               lang: "python",
-              label: "Keep only values greater than 0",
-              content: `import numpy as np
+              label: "Loop way — works, but long and slow on big data",
+              content: `scores = [55, 92, 78, 100, 63]
+high = []
 
-a = np.array([-1, 3, 0, 7, -2])
-positives = a[a > 0]
-print(positives)   # [3 7]`,
+for s in scores:
+    if s >= 90:
+        high.append(s)
+
+print(high)   # [92, 100]`,
             },
           },
           {
             type: "text",
             content:
-              "First NumPy builds a **mask** — an array of **True** and **False** (one per element). Then it returns only the values where the mask is **True**. The **original array does not change**.",
+              "**NumPy way — no loop.** Convert to an array, write the rule inside brackets, and NumPy does the rest. Same result, cleaner code, and much faster when you have thousands of numbers.",
             code: {
               lang: "python",
-              label: "See the mask, then use it",
+              label: "Mask way — one line, no loop",
               content: `import numpy as np
 
 scores = np.array([55, 92, 78, 100, 63])
+high = scores[scores >= 90]
+print(high)   # [ 92 100]`,
+            },
+          },
+          {
+            type: "text",
+            content:
+              "So **what is a mask?** It is just an array of **`True`** and **`False`** — one answer per value: \"Does this score pass the test?\" **`scores >= 90`** builds the mask. **`scores[mask]`** keeps only the **`True`** spots.",
+            code: {
+              lang: "python",
+              label: "Step 1: build the mask — Step 2: use it",
+              content: `import numpy as np
+
+scores = np.array([55, 92, 78, 100, 63])
+
+# Step 1 — the mask (True = keep, False = skip)
 mask = scores >= 90
-print(mask)           # [False  True False  True False]
+print(mask)
+# [False  True False  True False]
+
+# Step 2 — apply the mask
 print(scores[mask])   # [ 92 100]`,
             },
           },
           {
             type: "diagram",
-            title: "Slice vs boolean mask",
+            title: "How a mask works",
             nodes: [
               {
-                id: "slice",
-                label: "Slicing",
+                id: "data",
+                label: "Your data",
                 color: "#6366f1",
-                items: [
-                  "By position: [1:4]",
-                  "Fixed rows or columns",
-                  "Example: grid[1, :]",
-                ],
+                items: ["scores = [55, 92, 78, 100, 63]", "One number per slot"],
               },
               {
                 id: "mask",
-                label: "Boolean mask",
+                label: "The mask",
                 color: "#8b5cf6",
                 items: [
-                  "By condition: arr > 90",
-                  "Keeps matching values only",
-                  "Example: scores[scores >= 60]",
+                  "scores >= 90",
+                  "[F, T, F, T, F]",
+                  "True = passes the rule",
                 ],
+              },
+              {
+                id: "result",
+                label: "Result",
+                color: "#4f46e5",
+                items: ["scores[mask]", "Only True values kept", "[92, 100]"],
               },
             ],
           },
           {
             type: "text",
             content:
-              "You can combine rules with **`&`** (and), **`|`** (or), and **`~`** (not). Put each part in **parentheses** — for example, evens between 10 and 50.",
+              "You can also write the mask **inside the brackets** directly — **`arr[arr > 0]`** means: \"build the mask and filter in one go.\" The **original array stays unchanged**; you get a **new selection**.",
             code: {
               lang: "python",
-              label: "Even numbers only",
+              label: "Shorthand — mask and filter together",
+              content: `import numpy as np
+
+a = np.array([-1, 3, 0, 7, -2])
+positives = a[a > 0]
+print(positives)   # [3 7]
+print(a)           # [-1  3  0  7 -2]  ← original untouched`,
+            },
+          },
+          {
+            type: "text",
+            content:
+              "Masks work with **any condition**: greater than, equal to, even numbers (`% 2 == 0`), and more. NumPy checks **every element at the same time** — that is why we skip loops.",
+            code: {
+              lang: "python",
+              label: "Even numbers with a mask",
               content: `import numpy as np
 
 nums = np.array([1, 2, 3, 4, 5, 6])
@@ -1148,16 +1187,55 @@ print(evens)   # [2 4 6]`,
             },
           },
           {
+            type: "diagram",
+            title: "Loop vs boolean mask",
+            nodes: [
+              {
+                id: "loop",
+                label: "Python loop",
+                color: "#f43f5e",
+                items: [
+                  "Check one item at a time",
+                  "More code to write",
+                  "Slower on large arrays",
+                ],
+              },
+              {
+                id: "mask",
+                label: "Boolean mask",
+                color: "#8b5cf6",
+                items: [
+                  "Check all items at once",
+                  "One short line",
+                  "Fast — the NumPy way",
+                ],
+              },
+            ],
+          },
+          {
             type: "callout",
             variant: "info",
             content:
-              "A mask **never edits** the original array. It returns a **new selection** you can print or use in the next step.",
+              "**Why no loops?** NumPy is built in C under the hood. Masking lets it scan the whole array in one fast pass instead of Python visiting each element slowly.",
           },
           {
             type: "callout",
             variant: "tip",
             content:
-              "Read **`arr[arr > 5]`** as: \"give me every element in `arr` where the condition is True.\"",
+              "Read **`scores[scores >= 90]`** aloud as: \"give me every score where `score >= 90` is True.\"",
+          },
+          {
+            type: "quiz",
+            question: "Why use a boolean mask instead of a for loop?",
+            options: [
+              "Loops cannot filter lists",
+              "Masks are shorter and faster for filtering whole arrays",
+              "Masks change every value to True",
+              "Loops are not allowed in Python",
+            ],
+            answer: 1,
+            explanation:
+              "Boolean masks filter an entire array in one NumPy operation — less code and better speed.",
           },
           {
             type: "quiz",
