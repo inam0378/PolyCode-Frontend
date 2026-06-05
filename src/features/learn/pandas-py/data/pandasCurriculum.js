@@ -692,8 +692,10 @@ print(df.shape)`,
             label: "Peek at a table",
             content: `import pandas as pd
 
-df = pd.DataFrame({"a": [1, 2, 3, 4, 5]})
-print(df.head(3))`,
+df = pd.DataFrame(
+       {"Name": ["Ali", "Sara", "Ahmed"],
+       "Age": [20, 22, 19]})
+print(df.head(2))`,
           },
           {
             type: "callout",
@@ -722,13 +724,22 @@ print(df.head(3))`,
           description: "Create any 5-row DataFrame and print `df.head(3)`.",
           starterCode: `import pandas as pd
 
-df = pd.DataFrame({"x": [10, 20, 30, 40, 50]})
-# print first 3 rows
+df = pd.DataFrame({
+    "Name": ["Ali", "Sara", "Ahmed", "John", "Emma"],
+    "Age": [20, 22, 19, 25, 21],
+    "Grade": [85, 92, 78, 88, 95]
+})
+
+# Show only the first 3 rows
 
 `,
           solutionCode: `import pandas as pd
 
-df = pd.DataFrame({"x": [10, 20, 30, 40, 50]})
+df = pd.DataFrame({
+    "Name": ["Ali", "Sara", "Ahmed", "John", "Emma"],
+    "Age": [20, 22, 19, 25, 21],
+    "Grade": [85, 92, 78, 88, 95]
+})
 print(df.head(3))`,
           tests: [
             {
@@ -785,8 +796,7 @@ print(df.head(3))`,
             content: `import pandas as pd
 
 df = pd.DataFrame({"name": ["A", "B"], "age": [20, 21]})
-ages = df["age"]
-print(ages)
+print(df["age"])
 print(df.dtypes)`,
           },
           {
