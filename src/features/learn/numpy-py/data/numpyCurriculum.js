@@ -1646,78 +1646,60 @@ print(a + 10)`,
           {
             type: "text",
             content:
-              "A 2D table has **rows** (across) and **columns** (down). In real life: rows might be **food trucks**, columns might be **Mon / Tue / Wed sales**. When you **sum** or **average**, you must choose: total **per truck** or total **per day**?",
+              "A 2D NumPy table has **rows** (side to side) and **columns** (top to bottom). When you **sum** or **average**, you pick a direction with **`axis`**: **`axis=1`** goes **across each row** (one answer per row), and **`axis=0`** goes **down each column** (one answer per column). That is what **row vs column operations** mean — same table, two different summaries.",
+          },
+          {
+            type: "text",
+            content:
+              "**Example:** two food trucks track sales for **Mon / Tue / Wed**. Purple totals are **per truck** (`axis=1`). Blue totals are **per day** (`axis=0`).",
+          },
+          {
+            type: "table",
+            title: "Food truck sales — two ways to sum",
+            columns: ["Mon", "Tue", "Wed"],
+            rows: [
+              { label: "Truck A", values: [100, 120, 90] },
+              { label: "Truck B", values: [80, 95, 110] },
+            ],
+            rowTotals: [310, 285],
+            colTotals: [180, 215, 200],
+            rowTotalLabel: "axis=1 → total per truck",
+            colTotalLabel: "axis=0 ↓ total per day",
+          },
+          {
+            type: "text",
+            content: "Here is the sales table in NumPy:",
             code: {
               lang: "python",
-              label: "Sales table — 2 trucks, 3 days",
+              label: "Build the table",
               content: `import numpy as np
 
-# Rows = trucks, columns = Mon Tue Wed
-sales = np.array([[100, 120,  90],   # Truck A
-                  [ 80,  95, 110]])   # Truck B
+sales = np.array([[100, 120,  90],
+                  [ 80,  95, 110]])
 print(sales)`,
             },
           },
           {
             type: "text",
             content:
-              "**`axis=1`** goes **sideways across each row** — one answer **per row**. Use it for \"how much did **each truck** sell this week?\"",
+              "Use **`axis=1`** when you want one total **per row** (each truck's weekly sales).",
             code: {
               lang: "python",
-              label: "Weekly total per truck (axis=1)",
-              content: `import numpy as np
-
-sales = np.array([[100, 120,  90],
-                  [ 80,  95, 110]])
-
-per_truck = sales.sum(axis=1)
-print(per_truck)   # [310 285]  → Truck A, Truck B`,
+              label: "Total per truck",
+              content: `per_truck = sales.sum(axis=1)
+print(per_truck)   # [310 285]`,
             },
           },
           {
             type: "text",
             content:
-              "**`axis=0`** goes **down each column** — one answer **per column**. Use it for \"how much did **every truck sell on Monday**?\" or average sales **per day**.",
+              "Use **`axis=0`** when you want one total **per column** (each day's sales across all trucks).",
             code: {
               lang: "python",
-              label: "Total and average per day (axis=0)",
-              content: `import numpy as np
-
-sales = np.array([[100, 120,  90],
-                  [ 80,  95, 110]])
-
-per_day_total = sales.sum(axis=0)
-per_day_avg   = sales.mean(axis=0)
-
-print(per_day_total)   # [180 215 200]
-print(per_day_avg)     # [90. 107.5 100. ]`,
+              label: "Total per day",
+              content: `per_day = sales.sum(axis=0)
+print(per_day)   # [180 215 200]`,
             },
-          },
-          {
-            type: "diagram",
-            title: "Which axis to pick?",
-            nodes: [
-              {
-                id: "axis1",
-                label: "axis=1 (across row)",
-                color: "#a855f7",
-                items: [
-                  "One result per row",
-                  "Per student, per truck, per product",
-                  "sales.sum(axis=1)",
-                ],
-              },
-              {
-                id: "axis0",
-                label: "axis=0 (down column)",
-                color: "#8b5cf6",
-                items: [
-                  "One result per column",
-                  "Per day, per subject, per city",
-                  "sales.sum(axis=0)",
-                ],
-              },
-            ],
           },
           {
             type: "callout",

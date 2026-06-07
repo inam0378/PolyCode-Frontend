@@ -26,6 +26,74 @@ function InlineText({ text }) {
   );
 }
 
+function NumpyVisualTable({ block }) {
+  const rowAccent = block.rowAccent || "#a855f7";
+  const colAccent = block.colAccent || "#6366f1";
+
+  return (
+    <div className="numpy-visual-table-wrap">
+      <table className="numpy-visual-table">
+        <thead>
+          <tr>
+            <th className="numpy-vt-corner" />
+            {block.columns.map((col) => (
+              <th key={col} className="numpy-vt-col-head">
+                {col}
+              </th>
+            ))}
+            <th className="numpy-vt-row-total-head" style={{ color: rowAccent }}>
+              Total
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {block.rows.map((row, rowIndex) => (
+            <tr key={row.label}>
+              <th className="numpy-vt-row-head">{row.label}</th>
+              {row.values.map((value, colIndex) => (
+                <td key={`${row.label}-${colIndex}`} className="numpy-vt-cell">
+                  {value}
+                </td>
+              ))}
+              <td
+                className="numpy-vt-row-total"
+                style={{ background: `${rowAccent}22`, borderColor: `${rowAccent}55` }}
+              >
+                {block.rowTotals[rowIndex]}
+              </td>
+            </tr>
+          ))}
+          <tr className="numpy-vt-col-total-row">
+            <th className="numpy-vt-col-total-head" style={{ color: colAccent }}>
+              Total
+            </th>
+            {block.colTotals.map((total, colIndex) => (
+              <td
+                key={`col-total-${colIndex}`}
+                className="numpy-vt-col-total"
+                style={{ background: `${colAccent}22`, borderColor: `${colAccent}55` }}
+              >
+                {total}
+              </td>
+            ))}
+            <td className="numpy-vt-corner-total" />
+          </tr>
+        </tbody>
+      </table>
+      <div className="numpy-vt-legend">
+        <span className="numpy-vt-legend-item" style={{ color: rowAccent }}>
+          <span className="numpy-vt-legend-swatch" style={{ background: rowAccent }} />
+          {block.rowTotalLabel || "axis=1 → add across each row"}
+        </span>
+        <span className="numpy-vt-legend-item" style={{ color: colAccent }}>
+          <span className="numpy-vt-legend-swatch" style={{ background: colAccent }} />
+          {block.colTotalLabel || "axis=0 ↓ add down each column"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function NumpyTheoryBlock({ block, step, accentColor }) {
   const [selectedQuiz, setSelectedQuiz] = useState(null);
 
@@ -93,6 +161,20 @@ function NumpyTheoryBlock({ block, step, accentColor }) {
           language="python"
         />
       </div>
+    );
+  }
+
+  if (block.type === "table") {
+    return (
+      <article className="numpy-step-card numpy-table-card">
+        <div className="numpy-step-head">
+          <span className="numpy-step-num" style={{ background: accentColor }}>
+            {step}
+          </span>
+          <span className="numpy-step-label">{block.title}</span>
+        </div>
+        <NumpyVisualTable block={block} />
+      </article>
     );
   }
 
@@ -205,7 +287,10 @@ export default function NumpyIntroTheory({
 
         {lesson.theory.map((block, index) => {
           const needsStep =
-            block.type === "text" || block.type === "diagram" || block.type === "quiz";
+            block.type === "text" ||
+            block.type === "table" ||
+            block.type === "diagram" ||
+            block.type === "quiz";
           const step = needsStep ? ++stepCounter : stepCounter;
 
           return (
