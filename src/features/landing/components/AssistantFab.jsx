@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronRight, Minus, Sparkles, Trash2, Zap } from "lucide-react";
-import { postAssistantChat } from "../lib/assistantApi";
+import {
+  clearAssistantSession,
+  fetchAssistantSession,
+  postAssistantChat,
+} from "../lib/assistantApi";
 import { ASSISTANT_CONFIG } from "../lib/assistantConfig";
 import { useTypewriter } from "../lib/useTypewriter";
 import AssistantAvatar from "./AssistantAvatar";
@@ -183,6 +187,32 @@ export default function AssistantFab() {
   }, [session]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateFromServer() {
+      const current = loadSession();
+      const data = await fetchAssistantSession(current.sessionId);
+      if (cancelled || !data?.messages?.length) return;
+
+      const serverMessages = data.messages.map((m, index) => ({
+        id: `server-${index}-${m.createdAt || Date.now()}`,
+        role: m.role,
+        content: m.content,
+      }));
+
+      setSession({
+        sessionId: current.sessionId,
+        messages: [WELCOME_MESSAGE, ...serverMessages],
+      });
+    }
+
+    hydrateFromServer();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (open) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [session.messages, open, sending]);
 
@@ -210,8 +240,14 @@ export default function AssistantFab() {
   }, []);
 
   const clearSession = useCallback(() => {
-    setSession({ sessionId: generateSessionId(), messages: [WELCOME_MESSAGE] });
+    const previousSessionId = sessionRef.current.sessionId;
+    const nextSession = {
+      sessionId: generateSessionId(),
+      messages: [WELCOME_MESSAGE],
+    };
+    setSession(nextSession);
     setError(null);
+    clearAssistantSession(previousSessionId).catch(() => {});
   }, []);
 
   const sendText = useCallback(
