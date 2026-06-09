@@ -1,6 +1,5 @@
 import React from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import PolyCodeLogo from "./PolyCodeLogo";
 
 const NAV_LINKS = [
   { href: "#modules", label: "Modules" },
@@ -20,7 +19,11 @@ export default function Navbar() {
     >
       <div className="landing-container landing-navbar-inner">
         <a href="#top" className="landing-nav-logo">
-          <PolyCodeLogo height={32} className="landing-logo-sm" />
+          <img src="/logo.png" alt="PolyCode Logo" className="landing-nav-logo-img" />
+          <div className="landing-nav-brand-text">
+            <span className="landing-logo-text">PolyCode</span>
+            <span className="landing-logo-sub">v2.0 docs</span>
+          </div>
         </a>
 
         <nav className="landing-nav-links">
