@@ -2030,7 +2030,78 @@ print(np.dot(a, b))`,
           {
             type: "text",
             content:
-              "You already know **`np.dot`** for two flat lists and **`*`** for cell-by-cell math. **Matrix multiply** (`@`) is the next step: it combines **whole tables** — each answer cell is a **row × column** dot product.",
+              "You already know **`np.dot`** for two flat lists and **`*`** for cell-by-cell math. **Matrix multiply** (`@`) is the next step: it combines **whole tables**. Each answer cell is one **row** from the left table dotted with one **column** from the right table — the same pair-and-sum idea from the last lesson, but applied row by row.",
+          },
+          {
+            type: "text",
+            content:
+              "**See two separate arrays first.** On the left: **scores** (2 students × 2 assignments). On the right: **weights** (quiz 40%, project 60%). **`@`** combines them into **one final grade per student**.",
+          },
+          {
+            type: "matrices",
+            title: "Two arrays — then @ combines them",
+            left: {
+              label: "scores (2×2)",
+              data: [
+                [80, 90],
+                [70, 85],
+              ],
+            },
+            operator: "@",
+            right: {
+              label: "weights (2×1)",
+              data: [[0.4], [0.6]],
+            },
+            result: {
+              label: "scores @ weights",
+              data: [[86], [79]],
+            },
+            caption:
+              "Row 0 of **scores** (80, 90) meets **weights** → 80×0.4 + 90×0.6 = **86**. Same for student B → **79**.",
+            leftAccent: "#ec4899",
+            rightAccent: "#f472b6",
+            resultAccent: "#db2777",
+          },
+          {
+            type: "diagram",
+            title: "How @ is different from * and np.dot",
+            nodes: [
+              {
+                id: "dot",
+                label: "np.dot — two lists",
+                color: "#ec4899",
+                items: [
+                  "Multiply matching pairs, add up",
+                  "One final number",
+                  "Receipt total",
+                ],
+              },
+              {
+                id: "star",
+                label: "* — same-size tables",
+                color: "#f472b6",
+                items: [
+                  "Cell × matching cell",
+                  "Same shape out",
+                  "Sales, discounts",
+                ],
+              },
+              {
+                id: "at",
+                label: "@ — combine tables",
+                color: "#db2777",
+                items: [
+                  "Each cell = row · column",
+                  "Two different arrays",
+                  "Inner sizes must match",
+                ],
+              },
+            ],
+          },
+          {
+            type: "text",
+            content:
+              "Here is the same grade example in code. **`scores @ weights`** applies 40% to quiz and 60% to project for each student.",
             code: {
               lang: "python",
               label: "Real life: weighted grades for two students",
@@ -2051,7 +2122,43 @@ print(finals)   # [[86.], [79.]] — one final per student`,
           {
             type: "text",
             content:
-              "Here is a small **2×2** table multiply. Each cell in the answer mixes one **row** from `A` with one **column** from `B` — that inner work is the dot product you just learned.",
+              "**Same idea with numbers:** array **A** is 2×2, array **B** is 2×2. Each cell in the answer is one **row from A** dotted with one **column from B**.",
+          },
+          {
+            type: "matrices",
+            title: "2×2 example — A, B, and the result",
+            left: {
+              label: "A",
+              data: [
+                [1, 2],
+                [3, 4],
+              ],
+            },
+            operator: "@",
+            right: {
+              label: "B",
+              data: [
+                [2, 0],
+                [1, 2],
+              ],
+            },
+            result: {
+              label: "A @ B",
+              data: [
+                [4, 4],
+                [10, 8],
+              ],
+            },
+            caption:
+              "Top-left **4** = row [1,2] · col [2,1] → 1×2 + 2×1. Each result cell uses one row and one column.",
+            leftAccent: "#ec4899",
+            rightAccent: "#f472b6",
+            resultAccent: "#db2777",
+          },
+          {
+            type: "text",
+            content:
+              "Build the same 2×2 multiply in NumPy. Each cell in the answer mixes one **row** from `A` with one **column** from `B`.",
             code: {
               lang: "python",
               label: "2×2 multiply with @",
@@ -2066,32 +2173,6 @@ print(A @ B)
 # [[ 4  4]
 #  [10  8]]`,
             },
-          },
-          {
-            type: "diagram",
-            title: "* vs @ — remember the difference",
-            nodes: [
-              {
-                id: "star",
-                label: "Element-wise *",
-                color: "#ec4899",
-                items: [
-                  "Same-size tables",
-                  "Cell × matching cell",
-                  "Sales, discounts, masks",
-                ],
-              },
-              {
-                id: "at",
-                label: "Matrix @",
-                color: "#f472b6",
-                items: [
-                  "Row × column rule",
-                  "Weighted grades, transforms",
-                  "Also: np.matmul(A, B)",
-                ],
-              },
-            ],
           },
           {
             type: "text",

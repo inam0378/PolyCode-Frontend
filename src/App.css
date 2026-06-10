@@ -7649,6 +7649,72 @@ body {
   flex-shrink: 0;
 }
 
+.numpy-matrix-op-wrap {
+  margin-top: 4px;
+}
+
+.numpy-matrix-op-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px 20px;
+}
+
+.numpy-matrix-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.numpy-matrix-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.numpy-matrix-grid {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.numpy-matrix-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--txt-0, #f0f0ff);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.numpy-matrix-operator {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.numpy-matrix-caption {
+  margin: 14px 0 0;
+  text-align: center;
+  color: var(--txt-1, #c0c8e0);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
 .numpy-quiz-card {
   padding: 18px 20px;
   border-radius: 12px;

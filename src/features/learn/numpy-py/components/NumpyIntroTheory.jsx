@@ -26,6 +26,73 @@ function InlineText({ text }) {
   );
 }
 
+function NumpyMatrixGrid({ label, data = [], accentColor }) {
+  const colCount = Math.max(...data.map((row) => row.length), 1);
+
+  return (
+    <div className="numpy-matrix-panel">
+      <span className="numpy-matrix-label" style={{ color: accentColor }}>
+        {label}
+      </span>
+      <div
+        className="numpy-matrix-grid"
+        style={{ gridTemplateColumns: `repeat(${colCount}, minmax(44px, 1fr))` }}
+      >
+        {data.map((row, rowIndex) =>
+          row.map((cell, colIndex) => (
+            <span
+              key={`${rowIndex}-${colIndex}`}
+              className="numpy-matrix-cell"
+              style={{ borderColor: `${accentColor}44` }}
+            >
+              {cell}
+            </span>
+          )),
+        )}
+      </div>
+    </div>
+  );
+}
+
+function NumpyMatrixOpVisual({ block, accentColor }) {
+  const leftAccent = block.leftAccent || accentColor;
+  const rightAccent = block.rightAccent || "#f472b6";
+  const resultAccent = block.resultAccent || "#db2777";
+
+  return (
+    <div className="numpy-matrix-op-wrap">
+      <div className="numpy-matrix-op-row">
+        <NumpyMatrixGrid label={block.left.label} data={block.left.data} accentColor={leftAccent} />
+        <span className="numpy-matrix-operator" style={{ color: accentColor }}>
+          {block.operator || "@"}
+        </span>
+        <NumpyMatrixGrid
+          label={block.right.label}
+          data={block.right.data}
+          accentColor={rightAccent}
+        />
+        {block.result ? (
+          <>
+            <span className="numpy-matrix-operator" style={{ color: accentColor }}>
+              =
+            </span>
+            <NumpyMatrixGrid
+              label={block.result.label}
+              data={block.result.data}
+              accentColor={resultAccent}
+            />
+          </>
+        ) : null}
+      </div>
+      {block.caption ? (
+        <p className="numpy-matrix-caption">
+          <InlineText text={block.caption} />
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function NumpyVisualTable({ block }) {
   const rowAccent = block.rowAccent || "#a855f7";
   const colAccent = block.colAccent || "#6366f1";
@@ -178,6 +245,20 @@ function NumpyTheoryBlock({ block, step, accentColor }) {
     );
   }
 
+  if (block.type === "matrices") {
+    return (
+      <article className="numpy-step-card numpy-matrices-card">
+        <div className="numpy-step-head">
+          <span className="numpy-step-num" style={{ background: accentColor }}>
+            {step}
+          </span>
+          <span className="numpy-step-label">{block.title}</span>
+        </div>
+        <NumpyMatrixOpVisual block={block} accentColor={accentColor} />
+      </article>
+    );
+  }
+
   if (block.type === "diagram") {
     return (
       <article className="numpy-step-card numpy-diagram-card">
@@ -289,6 +370,7 @@ export default function NumpyIntroTheory({
           const needsStep =
             block.type === "text" ||
             block.type === "table" ||
+            block.type === "matrices" ||
             block.type === "diagram" ||
             block.type === "quiz";
           const step = needsStep ? ++stepCounter : stepCounter;
