@@ -1,0 +1,94 @@
+/* PolyMentor — global assistant panel (all pages) */
+
+.polym_mentor-panel {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.polym_mentor-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.polym_mentor-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.polym_mentor-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.polym_mentor-dock {
+  box-shadow: 0 0 0 1px var(--border), -12px 12px 40px -8px rgba(0, 0, 0, 0.7);
+}
+
+.assistant-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+.assistant-panel {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 125;
+  display: flex;
+  flex-direction: column;
+  width: min(100vw, 420px);
+  border-left: 1px solid var(--border);
+  background: #060a10;
+  box-shadow: -20px 0 80px rgba(0, 0, 0, 0.6);
+}
+
+.assistant-dock-btn {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 0;
+  z-index: 130;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: 1rem 0 0 1rem;
+  background: rgba(10, 16, 24, 0.95);
+  padding: 0.5rem 1rem 0.5rem 0.5rem;
+  cursor: pointer;
+  backdrop-filter: blur(16px);
+  transition: border-color 0.2s, padding-left 0.3s, background 0.2s;
+}
+
+.assistant-dock-btn:hover {
+  border-color: var(--acid);
+  background: var(--acid-dim);
+  padding-left: 0.75rem;
+}
+
+.assistant-context-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  max-width: 100%;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--acid-dim);
+  padding: 0.2rem 0.65rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--acid);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

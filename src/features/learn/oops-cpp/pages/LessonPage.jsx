@@ -6,6 +6,7 @@ import CodeChallenge from "../components/CodeChallenge";
 import OopsSidebar from "../components/OopsSidebar";
 import LearnProfileMenu from "../../shared/LearnProfileMenu";
 import useOopsProgress from "../hooks/useOopsProgress";
+import { useLessonAssistantContext } from "../../../assistant/hooks/useLessonAssistantContext";
 
 function plainLessonText(text = "") {
   return text.replace(/\*\*/g, "").replace(/`/g, "");
@@ -105,6 +106,15 @@ export default function LessonPage() {
     [lesson],
   );
   const keyTerms = useMemo(() => (lesson ? getKeyTerms(lesson) : []), [lesson]);
+
+  useLessonAssistantContext({
+    course: "OOP C++",
+    language: "C++",
+    lesson,
+    chapter: lesson?.chapterTitle,
+    tab,
+    code: savedCodeMap[lessonId] || "",
+  });
 
   useEffect(() => {
     setTab("theory");

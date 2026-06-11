@@ -11,6 +11,7 @@ import {
   NUMPY_TOTAL_XP,
 } from "../data/numpyCurriculum";
 import useNumpyProgress from "../hooks/useNumpyProgress";
+import { useLessonAssistantContext } from "../../../assistant/hooks/useLessonAssistantContext";
 
 const BASE_PATH = "/learn/numpy-py";
 
@@ -92,6 +93,15 @@ export default function NumpyLessonPage() {
     "Run each code sample in the Playground or challenge.",
     "Change one value in the array and predict the output before running.",
   ];
+
+  useLessonAssistantContext({
+    course: "NumPy",
+    language: "Python",
+    lesson,
+    chapter: lesson?.chapterTitle,
+    tab,
+    code: savedCodeMap[lessonId] || "",
+  });
 
   useEffect(() => {
     setTab("theory");

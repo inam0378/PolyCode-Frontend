@@ -10,6 +10,7 @@ import {
   PANDAS_TOTAL_XP,
 } from "../data/pandasCurriculum";
 import usePandasProgress from "../hooks/usePandasProgress";
+import { useLessonAssistantContext } from "../../../assistant/hooks/useLessonAssistantContext";
 
 const BASE_PATH = "/learn/pandas-py";
 
@@ -39,6 +40,15 @@ export default function PandasLessonPage() {
   const lessonIdx = PANDAS_LESSONS.findIndex((item) => item.id === lessonId);
   const prev = PANDAS_LESSONS[lessonIdx - 1];
   const next = PANDAS_LESSONS[lessonIdx + 1];
+
+  useLessonAssistantContext({
+    course: "Pandas",
+    language: "Python",
+    lesson,
+    chapter: lesson?.chapterTitle,
+    tab,
+    code: savedCodeMap[lessonId] || "",
+  });
 
   useEffect(() => {
     setTab("theory");

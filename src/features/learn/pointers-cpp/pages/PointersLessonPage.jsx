@@ -10,6 +10,7 @@ import {
   POINTER_TOTAL_XP,
 } from "../data/pointersCurriculum";
 import usePointersProgress from "../hooks/usePointersProgress";
+import { useLessonAssistantContext } from "../../../assistant/hooks/useLessonAssistantContext";
 
 const BASE_PATH = "/learn/pointers-cpp";
 
@@ -103,6 +104,15 @@ export default function PointersLessonPage() {
     "Trace every `&`, `*`, and owner before reading the full code.",
     "Run the challenge, then change one pointer line and run again.",
   ];
+
+  useLessonAssistantContext({
+    course: "Pointers C++",
+    language: "C++",
+    lesson,
+    chapter: lesson?.chapterTitle,
+    tab,
+    code: savedCodeMap[lessonId] || "",
+  });
 
   useEffect(() => {
     setTab("theory");

@@ -1,6 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronRight, Minus, Sparkles, Trash2, Zap } from "lucide-react";
+import { useAssistant } from "../../assistant/context/AssistantContext";
+import {
+  getContextLabel,
+  getQuickPrompts,
+  getWelcomeMessage,
+} from "../../assistant/lib/assistantPrompts";
 import {
   clearAssistantSession,
   fetchAssistantSession,
@@ -172,6 +178,7 @@ function ThinkingIndicator() {
 }
 
 export default function AssistantFab() {
+  const { context: assistantContext } = useAssistant();
   const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState(() => loadSession());
@@ -275,6 +282,7 @@ export default function AssistantFab() {
           message: text,
           history,
           session_id: currentSession.sessionId,
+          context: assistantContext,
         });
         const assistantMsg = {
           id: `assistant-${Date.now()}`,
@@ -295,7 +303,7 @@ export default function AssistantFab() {
         setSending(false);
       }
     },
-    [sending],
+    [sending, assistantContext],
   );
 
   const send = useCallback(async () => {
@@ -309,10 +317,16 @@ export default function AssistantFab() {
     }
   };
 
+  const quickPrompts = getQuickPrompts(assistantContext);
+  const contextLabel = getContextLabel(assistantContext);
+
   const showQuickPrompts =
     session.messages.length <= 1 &&
     !sending &&
     session.messages.every((m) => m.id === "welcome");
+
+  const messageContent = (msg) =>
+    msg.id === "welcome" ? getWelcomeMessage(assistantContext) : msg.content;
 
   return (
     <>
@@ -359,6 +373,11 @@ export default function AssistantFab() {
                     <p style={{ margin: 0, fontSize: "0.75rem", color: "#94a3b8" }}>
                       {ASSISTANT_CONFIG.tagline}
                     </p>
+                    {contextLabel ? (
+                      <span className="assistant-context-badge" title={contextLabel}>
+                        {contextLabel}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "0.25rem" }}>
@@ -413,11 +432,14 @@ export default function AssistantFab() {
                         <p style={{ margin: "0 0 0.25rem", fontFamily: "ui-monospace, monospace", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#64748b" }}>
                           you.input
                         </p>
-                        <p style={{ margin: 0, fontSize: "13px", color: "#f1f5f9" }}>{msg.content}</p>
+                        <p style={{ margin: 0, fontSize: "13px", color: "#f1f5f9" }}>{messageContent(msg)}</p>
                       </div>
                     </div>
                   ) : (
-                    <MentorReply msg={msg} reduceMotion={reduceMotion} />
+                    <MentorReply
+                      msg={{ ...msg, content: messageContent(msg) }}
+                      reduceMotion={reduceMotion}
+                    />
                   )}
                 </div>
               ))}
@@ -428,7 +450,7 @@ export default function AssistantFab() {
                     Quick prompts
                   </p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                    {ASSISTANT_CONFIG.quickPrompts.map((prompt) => (
+                    {quickPrompts.map((prompt) => (
                       <button
                         key={prompt}
                         type="button"
@@ -516,7 +538,7 @@ export default function AssistantFab() {
                     height: 36,
                     borderRadius: "0.5rem",
                     border: "none",
-                    background: "#c4b56a",
+                    background: "var(--acid)",
                     color: "#fff",
                     cursor: "pointer",
                     opacity: !draft.trim() || sending ? 0.3 : 1,

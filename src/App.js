@@ -13,6 +13,8 @@ import { PlaygroundProvider } from "./features/playground/context/PlaygroundCont
 import { AuthProvider } from "./features/auth/context/AuthContext";
 import SelectionPins from "./shared/components/SelectionPins";
 import { LearnNavProvider } from "./features/learn/shared/LearnNavContext";
+import GlobalAssistant from "./features/assistant/components/GlobalAssistant";
+import { AssistantProvider } from "./features/assistant/context/AssistantContext";
 import "./App.css";
 import "./styles/theme-light.css";
 import "./styles/stack-picker-dark.css";
@@ -631,9 +633,12 @@ function App() {
     <AuthProvider>
       <PlaygroundProvider>
         <Router>
-          <SelectionPins />
-          <ScrollToTop />
-          <AppRoutes />
+          <AssistantProvider>
+            <SelectionPins />
+            <ScrollToTop />
+            <AppRoutes />
+            <GlobalAssistant />
+          </AssistantProvider>
         </Router>
       </PlaygroundProvider>
     </AuthProvider>

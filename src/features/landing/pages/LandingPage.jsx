@@ -1,6 +1,5 @@
 import React from "react";
 import AnimatedBackground from "../components/AnimatedBackground";
-import AssistantFab from "../components/AssistantFab";
 import CTASection from "../components/CTASection";
 import Footer from "../components/Footer";
 import Hero from "../components/Hero";
@@ -28,7 +27,6 @@ export default function LandingPage({ onLanguageSelect, continueLanguage }) {
         </main>
         <Footer />
       </div>
-      <AssistantFab />
     </div>
   );
 }

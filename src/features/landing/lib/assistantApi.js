@@ -14,13 +14,18 @@ function getAuthHeaders() {
   return headers;
 }
 
-export async function postAssistantChat(body) {
+export async function postAssistantChat({ message, history, session_id, context }) {
   const url = `${getApiBase()}/chat/assistant`;
 
   const res = await fetch(url, {
     method: "POST",
     headers: getAuthHeaders(),
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      message,
+      history,
+      session_id,
+      context: context || {},
+    }),
   });
 
   if (res.status === 429) {
