@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Eraser, MousePointer2, Pencil, Trash2, Type, Zap } from "lucide-react";
 import {
-  DEFAULT_LASER_COLOR,
   DEFAULT_PENCIL_COLOR,
   getPencilCursor,
   loadAnnotationPrefs,
