@@ -9,7 +9,9 @@ import {
   Trash2,
   Zap,
 } from "lucide-react";
+import { useAuth } from "../../auth/context/AuthContext";
 import { useAssistant } from "../../assistant/context/AssistantContext";
+import ProfileAvatar from "../../profile/components/ProfileAvatar";
 import {
   getContextLabel,
   getQuickPrompts,
@@ -218,7 +220,23 @@ function ThinkingIndicator() {
   );
 }
 
+function UserReply({ content, user }) {
+  return (
+    <div className="assistant-user-row">
+      {user ? (
+        <div className="assistant-user-avatar" aria-hidden>
+          <ProfileAvatar user={user} size="sm" />
+        </div>
+      ) : null}
+      <div className="assistant-user-bubble">
+        <p>{content}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function AssistantFab() {
+  const { user } = useAuth();
   const { context: assistantContext } = useAssistant();
   const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
@@ -514,19 +532,10 @@ export default function AssistantFab() {
                   {msg.role === "assistant" && msg.content === "" ? (
                     <ThinkingIndicator />
                   ) : msg.role === "user" ? (
-                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                      <div
-                        style={{
-                          maxWidth: "92%",
-                          borderRadius: "0.75rem",
-                          border: "1px solid rgba(100,116,139,0.3)",
-                          background: "rgba(30,41,59,0.5)",
-                          padding: "0.75rem 1rem",
-                        }}
-                      >
-                        <p style={{ margin: 0, fontSize: "13px", color: "#f1f5f9" }}>{messageContent(msg)}</p>
-                      </div>
-                    </div>
+                    <UserReply
+                      content={messageContent(msg)}
+                      user={user}
+                    />
                   ) : (
                     <MentorReply
                       msg={{ ...msg, content: messageContent(msg) }}
