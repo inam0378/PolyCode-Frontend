@@ -4181,7 +4181,10 @@ body {
 
 .oops-guide-tools {
   display: grid;
-  grid-template-columns: minmax(320px, 1.35fr) minmax(220px, 0.8fr) minmax(220px, 0.75fr);
+  grid-template-columns: minmax(320px, 1.35fr) minmax(220px, 0.8fr) minmax(
+      220px,
+      0.75fr
+    );
   gap: 14px;
   margin: -24px 0 24px;
   position: relative;
@@ -4434,7 +4437,11 @@ body {
 .oops-path-step.active,
 .oops-path-step.done {
   border-color: var(--ch-color, var(--acid, #ffe566));
-  background: color-mix(in srgb, var(--ch-color, var(--acid, #ffe566)) 9%, var(--ink-2));
+  background: color-mix(
+    in srgb,
+    var(--ch-color, var(--acid, #ffe566)) 9%,
+    var(--ink-2)
+  );
 }
 
 .oops-path-step.done span {
@@ -4768,7 +4775,11 @@ body {
   border: 1px solid rgba(55, 148, 255, 0.24);
   border-radius: 10px;
   background:
-    radial-gradient(circle at top right, rgba(0, 212, 255, 0.12), transparent 36%),
+    radial-gradient(
+      circle at top right,
+      rgba(0, 212, 255, 0.12),
+      transparent 36%
+    ),
     var(--vscode-panel, #252526);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.38);
 }
@@ -4836,7 +4847,11 @@ body {
 .learn-profile-track div {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--acid, #ffe566), var(--cyan, #00d4ff));
+  background: linear-gradient(
+    90deg,
+    var(--acid, #ffe566),
+    var(--cyan, #00d4ff)
+  );
 }
 
 .learn-profile-grid {
@@ -4908,7 +4923,11 @@ body {
   border: 1px solid rgba(55, 148, 255, 0.22);
   border-radius: 12px;
   background:
-    radial-gradient(circle at top right, rgba(0, 212, 255, 0.14), transparent 38%),
+    radial-gradient(
+      circle at top right,
+      rgba(0, 212, 255, 0.14),
+      transparent 38%
+    ),
     var(--vscode-panel, #252526);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
 }
@@ -5323,7 +5342,6 @@ body {
   font: inherit;
 }
 
-
 .profile-hero-side {
   display: flex;
   flex-direction: column;
@@ -5595,7 +5613,11 @@ body {
 .profile-track-meter div {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--profile-accent), var(--cyan, #00d4ff));
+  background: linear-gradient(
+    90deg,
+    var(--profile-accent),
+    var(--cyan, #00d4ff)
+  );
 }
 
 .profile-track-stats {
@@ -5649,7 +5671,11 @@ body {
   border-radius: 16px;
   padding: clamp(28px, 6vw, 64px);
   background:
-    radial-gradient(circle at 78% 24%, color-mix(in srgb, var(--language-color) 24%, transparent), transparent 34%),
+    radial-gradient(
+      circle at 78% 24%,
+      color-mix(in srgb, var(--language-color) 24%, transparent),
+      transparent 34%
+    ),
     linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 42%),
     var(--ink-2, #05070f);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
@@ -5726,7 +5752,11 @@ body {
   aspect-ratio: 1;
   border-radius: 28px;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.02)),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.16),
+      rgba(255, 255, 255, 0.02)
+    ),
     color-mix(in srgb, var(--language-color) 14%, transparent);
   border: 1px solid color-mix(in srgb, var(--language-color) 38%, var(--border));
   box-shadow:
@@ -5776,7 +5806,11 @@ body {
   border: 1px solid var(--border);
   border-radius: 10px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--course-accent) 8%, transparent), transparent 46%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--course-accent) 8%, transparent),
+      transparent 46%
+    ),
     var(--ink-2);
   color: inherit;
   text-decoration: none;
@@ -6087,7 +6121,9 @@ body {
   cursor: pointer;
   padding: 5px 10px;
   border-radius: 6px;
-  transition: opacity 0.15s, transform 0.15s;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
 }
 
 .oops-run-code-btn:hover:not(:disabled) {
@@ -6136,7 +6172,9 @@ body {
   border-radius: 5px;
   padding: 3px 8px;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .oops-clear-output-btn:hover {
@@ -6159,7 +6197,11 @@ body {
 .oops-pre {
   margin: 0;
   background:
-    radial-gradient(circle at top right, rgba(0, 212, 255, 0.08), transparent 34%),
+    radial-gradient(
+      circle at top right,
+      rgba(0, 212, 255, 0.08),
+      transparent 34%
+    ),
     rgba(3, 5, 10, 0.58);
   overflow-x: auto;
 }
@@ -6884,7 +6926,11 @@ body {
   border-radius: 8px;
   overflow: hidden;
   background:
-    radial-gradient(circle at top right, rgba(0, 212, 255, 0.08), transparent 34%),
+    radial-gradient(
+      circle at top right,
+      rgba(0, 212, 255, 0.08),
+      transparent 34%
+    ),
     var(--ink, #03050a);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
@@ -7850,7 +7896,9 @@ body {
   color: var(--txt-1, #c0c8e0);
   font-size: 0.92rem;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 
 .numpy-quiz-option:hover {
@@ -7960,7 +8008,9 @@ body {
   cursor: pointer;
   color: #0a0a0f;
   background: var(--numpy-accent, #818cf8);
-  transition: transform 0.15s, filter 0.15s;
+  transition:
+    transform 0.15s,
+    filter 0.15s;
 }
 
 .numpy-challenge-cta:hover {
@@ -8085,7 +8135,9 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .lesson-annotator-fab:hover,
@@ -8266,7 +8318,9 @@ body {
   background: var(--swatch);
   padding: 0;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .lesson-annotator-swatch:hover,
@@ -8287,17 +8341,18 @@ body {
   padding: 0;
   cursor: pointer;
   border: 1.5px solid rgba(255, 255, 255, 0.22);
-  background:
-    conic-gradient(
-      #ff4757,
-      #ffe566,
-      #4ade80,
-      #3794ff,
-      #c084fc,
-      #ff4757
-    );
+  background: conic-gradient(
+    #ff4757,
+    #ffe566,
+    #4ade80,
+    #3794ff,
+    #c084fc,
+    #ff4757
+  );
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .lesson-annotator-palette-btn::before {
@@ -8314,15 +8369,14 @@ body {
   position: absolute;
   inset: 4px;
   border-radius: 50%;
-  background:
-    conic-gradient(
-      #ff4757,
-      #ffe566,
-      #4ade80,
-      #3794ff,
-      #c084fc,
-      #ff4757
-    );
+  background: conic-gradient(
+    #ff4757,
+    #ffe566,
+    #4ade80,
+    #3794ff,
+    #c084fc,
+    #ff4757
+  );
   pointer-events: none;
 }
 
@@ -8332,16 +8386,13 @@ body {
     0 0 0 2px color-mix(in srgb, var(--picked-color, #fff) 50%, transparent),
     inset 0 0 0 2px rgba(255, 255, 255, 0.35);
   background:
-    radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.45), transparent 45%),
+    radial-gradient(
+      circle at 35% 35%,
+      rgba(255, 255, 255, 0.45),
+      transparent 45%
+    ),
     var(--picked-color, #888),
-    conic-gradient(
-      #ff4757,
-      #ffe566,
-      #4ade80,
-      #3794ff,
-      #c084fc,
-      #ff4757
-    );
+    conic-gradient(#ff4757, #ffe566, #4ade80, #3794ff, #c084fc, #ff4757);
 }
 
 .lesson-annotator-palette-input {
@@ -8512,4 +8563,152 @@ body {
     flex-wrap: wrap;
   }
 }
+/* ===========================
+   LESSON VIDEO SECTION
+   =========================== */
 
+.lesson-video {
+  width: 100%;
+  max-width: 500px;
+
+  margin: 2rem auto;
+
+  padding: 1rem;
+
+  border-radius: 20px;
+
+  background: rgba(10, 15, 25, 0.75);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  backdrop-filter: blur(12px);
+
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
+
+  transition: all 0.3s ease;
+}
+
+.lesson-video:hover {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.45),
+    0 0 30px rgba(0, 229, 255, 0.08);
+}
+
+/* ===========================
+     HEADER
+     =========================== */
+
+.lesson-video-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 1rem;
+
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.lesson-video-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  padding: 0.7rem 1rem;
+
+  border-radius: 999px;
+
+  background: rgba(0, 229, 255, 0.08);
+
+  border: 1px solid rgba(0, 229, 255, 0.15);
+
+  color: #67e8f9;
+
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.lesson-video-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  color: #cbd5e1;
+
+  text-decoration: none;
+
+  font-size: 0.95rem;
+  font-weight: 600;
+
+  transition: all 0.25s ease;
+}
+
+.lesson-video-link:hover {
+  color: white;
+}
+
+/* ===========================
+     VIDEO FRAME
+     =========================== */
+
+.lesson-video-frame {
+  position: relative;
+
+  width: 100%;
+
+  aspect-ratio: 16 / 9;
+
+  border-radius: 16px;
+
+  overflow: hidden;
+
+  background: #000;
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.lesson-video-frame iframe {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  border: 0;
+}
+
+/* ===========================
+     IMPORTANT PARENT FIX
+     =========================== */
+
+.lesson-content,
+.lesson-main,
+.course-content,
+.content-wrapper,
+.main-content {
+  width: 100%;
+  max-width: none;
+}
+
+/* ===========================
+     MOBILE
+     =========================== */
+
+@media (max-width: 768px) {
+  .lesson-video {
+    padding: 0.8rem;
+  }
+
+  .lesson-video-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
