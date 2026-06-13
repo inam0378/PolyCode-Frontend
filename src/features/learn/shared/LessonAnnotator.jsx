@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Eraser,
   GripVertical,
@@ -442,7 +448,9 @@ export default function LessonAnnotator({ storageKey, children }) {
       prev.filter((stroke) => !strokeNearPoint(stroke, point, ERASER_RADIUS)),
     );
     setLabels((prev) =>
-      prev.filter((label) => Math.hypot(label.x - point.x, label.y - point.y) > 24),
+      prev.filter(
+        (label) => Math.hypot(label.x - point.x, label.y - point.y) > 24,
+      ),
     );
   }, []);
 
@@ -456,7 +464,8 @@ export default function LessonAnnotator({ storageKey, children }) {
     return undefined;
   }, [tool, pencilColor]);
 
-  const activeToolItem = TOOL_ITEMS.find((item) => item.id === tool) || TOOL_ITEMS[0];
+  const activeToolItem =
+    TOOL_ITEMS.find((item) => item.id === tool) || TOOL_ITEMS[0];
   const ActiveIcon = activeToolItem.Icon;
 
   const selectTool = (nextTool) => {
@@ -715,7 +724,11 @@ export default function LessonAnnotator({ storageKey, children }) {
               autoFocus
             />
             <div className="lesson-annotator-label-actions">
-              <button type="button" onClick={handleAddLabel} disabled={!textDraft.trim()}>
+              <button
+                type="button"
+                onClick={handleAddLabel}
+                disabled={!textDraft.trim()}
+              >
                 Add
               </button>
               <button type="button" onClick={() => setPendingTextPoint(null)}>
@@ -738,7 +751,11 @@ export default function LessonAnnotator({ storageKey, children }) {
         </button>
 
         {menuOpen ? (
-          <div className="lesson-annotator-fab-menu" role="menu" aria-label="Markup tools">
+          <div
+            className="lesson-annotator-fab-menu"
+            role="menu"
+            aria-label="Markup tools"
+          >
             <div className="lesson-annotator-fab-menu-head">
               <span>Markup</span>
               <button
@@ -769,11 +786,15 @@ export default function LessonAnnotator({ storageKey, children }) {
 
             {tool === TOOLS.PENCIL || tool === TOOLS.LASER ? (
               <div className="lesson-annotator-fab-colors">
-                <span>{tool === TOOLS.PENCIL ? "Pencil color" : "Laser color"}</span>
+                <span>
+                  {tool === TOOLS.PENCIL ? "Pencil color" : "Laser color"}
+                </span>
                 <ColorPicker
                   label={tool === TOOLS.PENCIL ? "Pencil" : "Laser"}
                   value={tool === TOOLS.PENCIL ? pencilColor : laserColor}
-                  onChange={tool === TOOLS.PENCIL ? setPencilColor : setLaserColor}
+                  onChange={
+                    tool === TOOLS.PENCIL ? setPencilColor : setLaserColor
+                  }
                   compact
                 />
               </div>
