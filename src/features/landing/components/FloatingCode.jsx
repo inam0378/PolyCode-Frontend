@@ -2,12 +2,12 @@ import React from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 const SNIPPETS = [
-  { text: "def learn():", x: "4%", y: "18%", duration: 14 },
-  { text: "{ code }", x: "88%", y: "22%", duration: 16 },
-  { text: "async/await", x: "92%", y: "58%", duration: 12 },
-  { text: "<PolyCode />", x: "6%", y: "68%", duration: 18 },
-  { text: "import ai", x: "78%", y: "78%", duration: 15 },
-  { text: "git push", x: "14%", y: "42%", duration: 13 },
+  { text: "🐍 Python", x: "4%", y: "18%", duration: 14 },
+  { text: "📊 Pandas", x: "88%", y: "22%", duration: 16 },
+  { text: "🔢 NumPy", x: "92%", y: "58%", duration: 12 },
+  { text: "⚙️ C++", x: "6%", y: "68%", duration: 18 },
+  { text: "🤖 PolyMentor", x: "78%", y: "78%", duration: 15 },
+  { text: "💻 Playground", x: "14%", y: "42%", duration: 13 },
 ];
 
 export default function FloatingCode() {

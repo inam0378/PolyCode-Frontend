@@ -1,43 +1,56 @@
 import React from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 const NAV_LINKS = [
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#vision", label: "Vision" },
-  { href: "#get-started", label: "Get started" },
+  {
+    href: "#modules",
+    label: "Features",
+  },
+  {
+    href: "#get-started",
+    label: "Languages",
+  },
+  {
+    href: "/docs",
+    label: "Documentation",
+  },
 ];
 
 export default function Navbar() {
-  const reduceMotion = useReducedMotion();
-
   return (
-    <motion.header
-      className="landing-navbar"
-      initial={reduceMotion ? {} : { y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-    >
-      <div className="landing-container landing-navbar-inner">
-        <a href="#top" className="landing-nav-logo">
-          <img src="/logo.png" alt="PolyCode Logo" className="landing-nav-logo-img" />
-          <div className="landing-nav-brand-text">
-            <span className="landing-logo-text">PolyCode</span>
-            <span className="landing-logo-sub">v2.0 docs</span>
-          </div>
-        </a>
+    <header className="landing-navbar">
+      {" "}
+      <div className="landing-container">
+        {" "}
+        <div className="landing-navbar-inner">
+          <a href="#top" className="landing-brand">
+            <div className="landing-brand-mark">
+              <img
+                src="/images/logo.png"
+                alt="PolyCode Logo"
+                className="landing-logo"
+              />
+            </div>
 
-        <nav className="landing-nav-links">
-          {NAV_LINKS.map((link) => (
-            <a key={link.href} href={link.href} className="landing-nav-link">
-              {link.label}
-            </a>
-          ))}
-        </nav>
+            <div className="landing-brand-text">
+              <span className="landing-logo-text">PolyCode</span>
 
-        <a href="#get-started" className="landing-btn-primary">
-          Get started
-        </a>
+              <span className="landing-logo-sub">AI Learning Platform</span>
+            </div>
+          </a>
+          <nav className="landing-nav-links">
+            {NAV_LINKS.map((link) => (
+              <a key={link.label} href={link.href} className="landing-nav-link">
+                {link.label}
+              </a>
+            ))}
+          </nav>
+          <a href="#get-started" className="landing-btn-primary">
+            Start Learning
+            <ArrowRight size={16} />
+          </a>
+        </div>
       </div>
-    </motion.header>
+    </header>
   );
 }

@@ -1,0 +1,4726 @@
+================================================================================
+START OF FOLDER: landing
+================================================================================
+
+================================================================================
+PROJECT STRUCTURE
+================================================================================
+Root: C:\QuantumLogics\PolyCode\frontend\src\features\landing
+
+landing/
+├── components/
+│   ├── AnimatedBackground.jsx
+│   ├── AssistantAvatar.jsx
+│   ├── AssistantFab.jsx
+│   ├── CTASection.jsx
+│   ├── FloatingCode.jsx
+│   ├── Footer.jsx
+│   ├── Hero.jsx
+│   ├── HowItWorksSection.jsx
+│   ├── LanguagePickerSection.jsx
+│   ├── Marquee.jsx
+│   ├── ModulesSection.jsx
+│   ├── Navbar.jsx
+│   ├── OpenAssistantButton.jsx
+│   ├── PolyCodeLogo.jsx
+│   ├── StatsSection.jsx
+│   └── Untitled
+├── lib/
+│   ├── assistantApi.js
+│   ├── assistantConfig.js
+│   └── useTypewriter.js
+├── pages/
+│   └── LandingPage.jsx
+├── landing.css
+
+Total files: 21
+
+================================================================================
+FILE CONTENTS
+================================================================================
+
+--------------------------------------------------------------------------------
+FILE: /components/AnimatedBackground.jsx
+--------------------------------------------------------------------------------
+import React from "react";
+import { motion, useReducedMotion } from "framer-motion";
+
+const ORBS = [
+  { size: 420, x: "8%", y: "12%", color: "rgba(139,92,246,0.08)", duration: 22, delay: 0 },
+  { size: 320, x: "78%", y: "8%", color: "rgba(0,242,255,0.05)", duration: 18, delay: 2 },
+  { size: 280, x: "65%", y: "62%", color: "rgba(255,229,102,0.03)", duration: 26, delay: 1 },
+  { size: 200, x: "12%", y: "72%", color: "rgba(0,242,255,0.04)", duration: 20, delay: 3 },
+];
+
+const PARTICLES = Array.from({ length: 18 }, (_, i) => ({
+  id: i,
+  left: `${8 + ((i * 17) % 84)}%`,
+  top: `${6 + ((i * 23) % 88)}%`,
+  size: 2 + (i % 3),
+  duration: 12 + (i % 8),
+  delay: i * 0.4,
+}));
+
+export default function AnimatedBackground() {
+  const reduceMotion = useReducedMotion();
+
+  if (reduceMotion) {
+    return <div className="landing-bg-wrap" />;
+  }
+
+  return (
+    <div className="landing-bg-wrap">
+      {ORBS.map((orb) => (
+        <motion.div
+          key={`${orb.x}-${orb.y}`}
+          className="landing-bg-orb"
+          style={{
+            width: orb.size,
+            height: orb.size,
+            left: orb.x,
+            top: orb.y,
+            background: `radial-gradient(circle, ${orb.color}, transparent 70%)`,
+          }}
+          animate={{
+            x: [0, 40, -20, 30, 0],
+            y: [0, -30, 20, -10, 0],
+            scale: [1, 1.08, 0.95, 1.05, 1],
+          }}
+          transition={{
+            duration: orb.duration,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: orb.delay,
+          }}
+        />
+      ))}
+
+      {PARTICLES.map((p) => (
+        <motion.span
+          key={p.id}
+          className="landing-bg-particle"
+          style={{ left: p.left, top: p.top, width: p.size, height: p.size }}
+          animate={{
+            y: [0, -28, 0],
+            opacity: [0.15, 0.7, 0.15],
+            scale: [1, 1.4, 1],
+          }}
+          transition={{
+            duration: p.duration,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: p.delay,
+          }}
+        />
+      ))}
+
+      <div className="landing-bg-grid-drift" />
+    </div>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/AssistantAvatar.jsx
+--------------------------------------------------------------------------------
+import React from "react";
+import { ASSISTANT_CONFIG } from "../lib/assistantConfig";
+
+const SIZES = {
+  sm: { box: 28, img: 24 },
+  md: { box: 56, img: 48 },
+  lg: { box: 64, img: 56 },
+};
+
+/** Renders the PolyMentor mascot with consistent framing on the dark landing UI. */
+export default function AssistantAvatar({ size = "md", alt = "" }) {
+  const dims = SIZES[size] || SIZES.md;
+
+  return (
+    <span
+      className="assistant-avatar-wrap"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: dims.box,
+        height: dims.box,
+        flexShrink: 0,
+        overflow: "hidden",
+        borderRadius: size === "lg" ? "1rem" : "0.75rem",
+        border: "1px solid var(--border)",
+        background: "#ececef",
+        padding: 2,
+      }}
+    >
+      <img
+        src={ASSISTANT_CONFIG.avatarSrc}
+        alt={alt}
+        width={dims.img}
+        height={dims.img}
+        className="assistant-avatar-img"
+        style={{
+          width: dims.img,
+          height: dims.img,
+          objectFit: "contain",
+          objectPosition: "center center",
+        }}
+      />
+    </span>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/AssistantFab.jsx
+--------------------------------------------------------------------------------
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ChevronRight, Minus, Sparkles, Trash2, Zap } from "lucide-react";
+import { useAssistant } from "../../assistant/context/AssistantContext";
+import {
+  getContextLabel,
+  getQuickPrompts,
+  getWelcomeMessage,
+} from "../../assistant/lib/assistantPrompts";
+import {
+  clearAssistantSession,
+  fetchAssistantSession,
+  postAssistantChat,
+} from "../lib/assistantApi";
+import { ASSISTANT_CONFIG } from "../lib/assistantConfig";
+import { useTypewriter } from "../lib/useTypewriter";
+import AssistantAvatar from "./AssistantAvatar";
+
+const MAX_STORED_MESSAGES = 20;
+
+const WELCOME_MESSAGE = {
+  id: "welcome",
+  role: "assistant",
+  content: ASSISTANT_CONFIG.welcomeMessage,
+};
+
+function generateSessionId() {
+  return `pm_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(ASSISTANT_CONFIG.storageKey);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.sessionId && Array.isArray(parsed.messages)) {
+        const hasWelcome = parsed.messages.some((m) => m.id === "welcome");
+        return {
+          ...parsed,
+          messages: hasWelcome
+            ? parsed.messages
+            : [WELCOME_MESSAGE, ...parsed.messages],
+        };
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return { sessionId: generateSessionId(), messages: [WELCOME_MESSAGE] };
+}
+
+function saveSession(session) {
+  try {
+    const trimmed =
+      session.messages.length > MAX_STORED_MESSAGES
+        ? [
+            WELCOME_MESSAGE,
+            ...session.messages
+              .filter((m) => m.id !== "welcome")
+              .slice(-(MAX_STORED_MESSAGES - 1)),
+          ]
+        : session.messages;
+    localStorage.setItem(
+      ASSISTANT_CONFIG.storageKey,
+      JSON.stringify({ ...session, messages: trimmed }),
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+function renderMarkdown(text) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={i} style={{ fontWeight: 600, color: "var(--acid)" }}>
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    const lines = part.split("\n");
+    return (
+      <span key={i}>
+        {lines.map((line, j) => (
+          <span key={j}>
+            {line}
+            {j < lines.length - 1 ? <br /> : null}
+          </span>
+        ))}
+      </span>
+    );
+  });
+}
+
+function MentorReply({ msg, reduceMotion }) {
+  const isNew = msg.id.startsWith("assistant-");
+  const shouldStream = isNew && !reduceMotion;
+  const { displayed, done } = useTypewriter(msg.content, shouldStream);
+  const visible = shouldStream ? displayed : msg.content;
+
+  return (
+    <article style={{ position: "relative", paddingLeft: "1.25rem" }}>
+      <span
+        aria-hidden
+        style={{
+          position: "absolute",
+          left: 0,
+          top: "0.75rem",
+          height: "calc(100% - 12px)",
+          width: 3,
+          borderRadius: 999,
+          background: "var(--acid)",
+        }}
+      />
+      <div
+        style={{
+          borderRadius: "0.75rem",
+          border: "1px solid var(--border)",
+          background: "rgba(10,18,24,0.9)",
+          padding: "1rem",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+          <AssistantAvatar size="sm" />
+          <span
+            style={{
+              fontFamily: "ui-monospace, monospace",
+              fontSize: "10px",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "var(--acid)",
+            }}
+          >
+            mentor.output
+          </span>
+        </div>
+        <p style={{ fontSize: "13px", lineHeight: 1.6, color: "#e2e8f0", margin: 0 }}>
+          {renderMarkdown(visible)}
+          {!done && shouldStream ? (
+            <span
+              style={{
+                display: "inline-block",
+                width: 2,
+                height: "1em",
+                marginLeft: 2,
+                background: "var(--acid)",
+                verticalAlign: "middle",
+                animation: "pulse 1s infinite",
+              }}
+            />
+          ) : null}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function ThinkingIndicator() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.75rem",
+        borderRadius: "0.75rem",
+        border: "1px solid rgba(34,211,238,0.15)",
+        background: "rgba(34,211,238,0.05)",
+        padding: "0.75rem 1rem",
+      }}
+    >
+      <span style={{ fontFamily: "ui-monospace, monospace", fontSize: "0.75rem", color: "rgba(103,232,249,0.8)" }}>
+        PolyMentor is thinking…
+      </span>
+    </div>
+  );
+}
+
+export default function AssistantFab() {
+  const { context: assistantContext } = useAssistant();
+  const reduceMotion = useReducedMotion();
+  const [open, setOpen] = useState(false);
+  const [session, setSession] = useState(() => loadSession());
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState(null);
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const sessionRef = useRef(session);
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateFromServer() {
+      const current = loadSession();
+      const data = await fetchAssistantSession(current.sessionId);
+      if (cancelled || !data?.messages?.length) return;
+
+      const serverMessages = data.messages.map((m, index) => ({
+        id: `server-${index}-${m.createdAt || Date.now()}`,
+        role: m.role,
+        content: m.content,
+      }));
+
+      setSession({
+        sessionId: current.sessionId,
+        messages: [WELCOME_MESSAGE, ...serverMessages],
+      });
+    }
+
+    hydrateFromServer();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (open) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [session.messages, open, sending]);
+
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 150);
+  }, [open]);
+
+  useEffect(() => {
+    saveSession(session);
+  }, [session]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener("open-polycode-assistant", onOpen);
+    return () => window.removeEventListener("open-polycode-assistant", onOpen);
+  }, []);
+
+  const clearSession = useCallback(() => {
+    const previousSessionId = sessionRef.current.sessionId;
+    const nextSession = {
+      sessionId: generateSessionId(),
+      messages: [WELCOME_MESSAGE],
+    };
+    setSession(nextSession);
+    setError(null);
+    clearAssistantSession(previousSessionId).catch(() => {});
+  }, []);
+
+  const sendText = useCallback(
+    async (text) => {
+      if (!text.trim() || sending) return;
+
+      const userMsg = { id: `user-${Date.now()}`, role: "user", content: text };
+      const pendingId = `pending-${Date.now()}`;
+      const pendingMsg = { id: pendingId, role: "assistant", content: "" };
+      setSession((prev) => ({
+        ...prev,
+        messages: [...prev.messages, userMsg, pendingMsg],
+      }));
+      setDraft("");
+      setSending(true);
+      setError(null);
+
+      const currentSession = sessionRef.current;
+      const history = currentSession.messages
+        .filter((m) => m.id !== "welcome" && m.id !== pendingId)
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      try {
+        const res = await postAssistantChat({
+          message: text,
+          history,
+          session_id: currentSession.sessionId,
+          context: assistantContext,
+        });
+        const assistantMsg = {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: res.response,
+        };
+        setSession((prev) => ({
+          ...prev,
+          messages: [...prev.messages.filter((m) => m.id !== pendingId), assistantMsg],
+        }));
+      } catch (err) {
+        setSession((prev) => ({
+          ...prev,
+          messages: prev.messages.filter((m) => m.id !== pendingId),
+        }));
+        setError(err instanceof Error ? err.message : "Connection failed. Try again.");
+      } finally {
+        setSending(false);
+      }
+    },
+    [sending, assistantContext],
+  );
+
+  const send = useCallback(async () => {
+    await sendText(draft);
+  }, [draft, sendText]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  };
+
+  const quickPrompts = getQuickPrompts(assistantContext);
+  const contextLabel = getContextLabel(assistantContext);
+
+  const showQuickPrompts =
+    session.messages.length <= 1 &&
+    !sending &&
+    session.messages.every((m) => m.id === "welcome");
+
+  const messageContent = (msg) =>
+    msg.id === "welcome" ? getWelcomeMessage(assistantContext) : msg.content;
+
+  return (
+    <>
+      <AnimatePresence>
+        {open ? (
+          <motion.button
+            type="button"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            aria-label="Close PolyMentor"
+            className="assistant-overlay"
+            onClick={() => setOpen(false)}
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {open ? (
+          <motion.aside
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="polym_mentor-title"
+            initial={reduceMotion ? {} : { x: "100%" }}
+            animate={{ x: 0 }}
+            exit={reduceMotion ? {} : { x: "100%" }}
+            transition={{ type: "spring", stiffness: 320, damping: 32 }}
+            className="assistant-panel polym_mentor-panel"
+          >
+            <div
+              style={{
+                flexShrink: 0,
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                padding: "1.25rem",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", minWidth: 0 }}>
+                  <AssistantAvatar size="md" alt={ASSISTANT_CONFIG.name} />
+                  <div>
+                    <p id="polym_mentor-title" style={{ margin: 0, fontFamily: "ui-monospace, monospace", fontSize: "1.125rem", fontWeight: 700, color: "#fff" }}>
+                      {ASSISTANT_CONFIG.name}
+                    </p>
+                    <p style={{ margin: 0, fontSize: "0.75rem", color: "#94a3b8" }}>
+                      {ASSISTANT_CONFIG.tagline}
+                    </p>
+                    {contextLabel ? (
+                      <span className="assistant-context-badge" title={contextLabel}>
+                        {contextLabel}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "0.25rem" }}>
+                  <button
+                    type="button"
+                    onClick={clearSession}
+                    disabled={sending}
+                    aria-label="Reset session"
+                    style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", padding: "0.5rem" }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    aria-label="Minimize"
+                    style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", padding: "0.5rem" }}
+                  >
+                    <Minus size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="polym_mentor-scroll"
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: "auto",
+                padding: "1.25rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "1.25rem",
+              }}
+            >
+              {session.messages.map((msg) => (
+                <div key={msg.id}>
+                  {msg.role === "assistant" && msg.content === "" ? (
+                    <ThinkingIndicator />
+                  ) : msg.role === "user" ? (
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <div
+                        style={{
+                          maxWidth: "92%",
+                          borderRadius: "0.75rem",
+                          border: "1px solid rgba(100,116,139,0.3)",
+                          background: "rgba(30,41,59,0.5)",
+                          padding: "0.75rem 1rem",
+                        }}
+                      >
+                        <p style={{ margin: "0 0 0.25rem", fontFamily: "ui-monospace, monospace", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#64748b" }}>
+                          you.input
+                        </p>
+                        <p style={{ margin: 0, fontSize: "13px", color: "#f1f5f9" }}>{messageContent(msg)}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <MentorReply
+                      msg={{ ...msg, content: messageContent(msg) }}
+                      reduceMotion={reduceMotion}
+                    />
+                  )}
+                </div>
+              ))}
+
+              {showQuickPrompts ? (
+                <div>
+                  <p style={{ margin: "0 0 0.5rem", fontFamily: "ui-monospace, monospace", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#64748b" }}>
+                    Quick prompts
+                  </p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                    {quickPrompts.map((prompt) => (
+                      <button
+                        key={prompt}
+                        type="button"
+                        onClick={() => sendText(prompt)}
+                        style={{
+                          borderRadius: "0.5rem",
+                          border: "1px solid var(--border)",
+                          background: "var(--glass)",
+                          padding: "0.5rem 0.75rem",
+                          fontSize: "0.75rem",
+                          color: "rgba(167,243,208,0.9)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {error ? (
+                <div
+                  style={{
+                    borderRadius: "0.5rem",
+                    border: "1px solid rgba(239,68,68,0.25)",
+                    background: "rgba(239,68,68,0.1)",
+                    padding: "0.75rem 1rem",
+                    fontFamily: "ui-monospace, monospace",
+                    fontSize: "0.75rem",
+                    color: "#fca5a5",
+                  }}
+                >
+                  error: {error}
+                </div>
+              ) : null}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div
+              style={{
+                flexShrink: 0,
+                borderTop: "1px solid rgba(255,255,255,0.06)",
+                background: "#04080d",
+                padding: "1rem",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-end", gap: "0.5rem", borderRadius: "0.75rem", border: "1px solid var(--border)", background: "#0a1018", padding: "0.5rem" }}>
+                <span style={{ paddingBottom: "0.5rem", paddingLeft: "0.25rem", fontFamily: "ui-monospace, monospace", fontWeight: 700, color: "var(--acid)" }}>
+                  &gt;
+                </span>
+                <textarea
+                  ref={inputRef}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={ASSISTANT_CONFIG.inputPlaceholder}
+                  rows={1}
+                  disabled={sending}
+                  aria-label="Ask PolyMentor"
+                  style={{
+                    flex: 1,
+                    minHeight: "2rem",
+                    maxHeight: "5rem",
+                    resize: "none",
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    color: "#f1f5f9",
+                    fontSize: "0.875rem",
+                    padding: "0.375rem 0",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={send}
+                  disabled={!draft.trim() || sending}
+                  aria-label="Send"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 36,
+                    height: 36,
+                    borderRadius: "0.5rem",
+                    border: "none",
+                    background: "var(--acid)",
+                    color: "#fff",
+                    cursor: "pointer",
+                    opacity: !draft.trim() || sending ? 0.3 : 1,
+                  }}
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+              <p style={{ margin: "0.5rem 0 0", textAlign: "center", fontFamily: "ui-monospace, monospace", fontSize: "9px", color: "#475569" }}>
+                {ASSISTANT_CONFIG.poweredByLabel}
+              </p>
+            </div>
+          </motion.aside>
+        ) : null}
+      </AnimatePresence>
+
+      {!open ? (
+        <motion.div
+          className="assistant-dock-btn polym_mentor-dock"
+          initial={reduceMotion ? {} : { x: 40, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.5, type: "spring", stiffness: 260, damping: 24 }}
+        >
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-label={`Open ${ASSISTANT_CONFIG.name}`}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              background: "none",
+              border: "none",
+              color: "inherit",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            <AssistantAvatar size="lg" alt={ASSISTANT_CONFIG.name} />
+            <span style={{ display: "flex", flexDirection: "column", textAlign: "left" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: "0.25rem", fontFamily: "ui-monospace, monospace", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--acid)" }}>
+                <Zap size={12} />
+                {ASSISTANT_CONFIG.name}
+              </span>
+              <span style={{ fontSize: "11px", color: "#94a3b8" }}>Tap to open mentor</span>
+            </span>
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: "0.5rem", background: "var(--acid-dim)", color: "var(--acid)" }}>
+              <Sparkles size={16} />
+            </span>
+          </button>
+        </motion.div>
+      ) : null}
+    </>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/CTASection.jsx
+--------------------------------------------------------------------------------
+import React, { useRef } from "react";
+import { motion, useReducedMotion, useInView } from "framer-motion";
+import OpenAssistantButton from "./OpenAssistantButton";
+
+export default function CTASection() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <section ref={ref} className="landing-section" style={{ paddingBottom: "6rem" }}>
+      <div className="landing-container">
+        <motion.div
+          className="landing-cta-box"
+          initial={reduceMotion ? {} : { opacity: 0, scale: 0.96 }}
+          animate={inView ? { opacity: 1, scale: 1 } : {}}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="landing-cta-glow" />
+          <h2>Ready to start learning with PolyCode?</h2>
+          <p>
+            Explore courses, ask PolyMentor anything about programming, and analyze
+            your code with PolyGuard — all in one ecosystem.
+          </p>
+          <div className="landing-cta-actions">
+            <OpenAssistantButton className="landing-btn-accent">
+              Chat with PolyMentor
+            </OpenAssistantButton>
+            <a href="#get-started" className="landing-btn-secondary">
+              Choose your language
+            </a>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/FloatingCode.jsx
+--------------------------------------------------------------------------------
+import React from "react";
+import { motion, useReducedMotion } from "framer-motion";
+
+const SNIPPETS = [
+  { text: "def learn():", x: "4%", y: "18%", duration: 14 },
+  { text: "{ code }", x: "88%", y: "22%", duration: 16 },
+  { text: "async/await", x: "92%", y: "58%", duration: 12 },
+  { text: "<PolyCode />", x: "6%", y: "68%", duration: 18 },
+  { text: "import ai", x: "78%", y: "78%", duration: 15 },
+  { text: "git push", x: "14%", y: "42%", duration: 13 },
+];
+
+export default function FloatingCode() {
+  const reduceMotion = useReducedMotion();
+  if (reduceMotion) return null;
+
+  return (
+    <div className="landing-floating-code">
+      {SNIPPETS.map((snippet) => (
+        <motion.span
+          key={snippet.text}
+          className="landing-code-snippet"
+          style={{ left: snippet.x, top: snippet.y }}
+          animate={{
+            y: [0, -16, 0, 12, 0],
+            x: [0, 8, -6, 4, 0],
+            opacity: [0.35, 0.75, 0.45, 0.7, 0.35],
+            rotate: [0, 2, -2, 1, 0],
+          }}
+          transition={{
+            duration: snippet.duration,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
+          {snippet.text}
+        </motion.span>
+      ))}
+    </div>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/Footer.jsx
+--------------------------------------------------------------------------------
+import React from "react";
+import PolyCodeLogo from "./PolyCodeLogo";
+
+export default function Footer() {
+  return (
+    <footer className="landing-footer">
+      <div className="landing-container landing-footer-inner">
+        <PolyCodeLogo height={48} />
+        <p>PolyMentor · PolyCode Website · PolyGuard</p>
+      </div>
+    </footer>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/Hero.jsx
+--------------------------------------------------------------------------------
+import React from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, Sparkles } from "lucide-react";
+import OpenAssistantButton from "./OpenAssistantButton";
+
+export default function Hero() {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <section className="landing-hero" id="top">
+      <div className="landing-hero-glow" />
+
+      <div className="landing-container landing-hero-grid">
+        <motion.div
+          initial={reduceMotion ? {} : { opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+        >
+          <p className="landing-eyebrow">
+            <Sparkles size={14} aria-hidden />
+            AI-Powered Learning Ecosystem
+          </p>
+          <h1>
+            Learn Programming Faster
+            <span className="landing-hero-shimmer">with AI Guidance</span>
+          </h1>
+          <p className="landing-hero-lead">
+            Structured programming courses, interactive exercises, real-time AI
+            mentoring, and built-in security analysis in one platform.
+          </p>
+          opers ship safer code.
+          <div className="landing-hero-actions">
+            <a href="#get-started" className="landing-btn-accent">
+              Start Learning
+              <ArrowRight size={16} aria-hidden />
+            </a>
+            <OpenAssistantButton className="landing-btn-secondary">
+              Try PolyMentor
+            </OpenAssistantButton>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="landing-hero-image-wrap"
+          initial={reduceMotion ? {} : { opacity: 0, scale: 0.95, x: 20 }}
+          animate={{ opacity: 1, scale: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+        >
+          <div className="landing-hero-image-glow" />
+          <motion.div
+            className="landing-hero-image"
+            animate={reduceMotion ? {} : { y: [0, -8, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <img
+              src="/images/polycode-hero.png"
+              alt="PolyCode platform — Learn, Code, Secure with PolyMentor, courses, and PolyGuard"
+            />
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/HowItWorksSection.jsx
+--------------------------------------------------------------------------------
+import React, { useRef } from "react";
+import { motion, useReducedMotion, useInView } from "framer-motion";
+import { BookOpen, Bot, Shield } from "lucide-react";
+import OpenAssistantButton from "./OpenAssistantButton";
+
+const FEATURES = [
+  {
+    id: "courses",
+    icon: BookOpen,
+    title: "Structured Learning",
+    description:
+      "Learn through organized courses, coding exercises, and hands-on practice.",
+    tag: "Courses",
+    barClass: "landing-feat-bar--violet",
+    iconClass: "landing-feat-icon--violet",
+    tagClass: "landing-feat-tag--violet",
+    action: "get-started",
+  },
+
+  {
+    id: "mentor",
+    icon: Bot,
+    title: "AI Mentor",
+    description:
+      "Get instant explanations, debugging help, and programming guidance.",
+    tag: "AI Powered",
+    barClass: "landing-feat-bar--cyan",
+    iconClass: "landing-feat-icon--cyan",
+    tagClass: "landing-feat-tag--cyan",
+    action: "assistant",
+  },
+
+  {
+    id: "security",
+    icon: Shield,
+    title: "Security Analysis",
+    description:
+      "Identify vulnerabilities and improve code quality automatically.",
+    tag: "Built In",
+    barClass: "landing-feat-bar--orange",
+    iconClass: "landing-feat-icon--orange",
+    tagClass: "landing-feat-tag--orange",
+    action: null,
+  },
+];
+
+export default function FeaturesSection() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <section id="modules" ref={ref} className="landing-section">
+      <div className="landing-container">
+        <motion.div
+          initial={reduceMotion ? {} : { opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+        >
+          <p className="landing-sec-label">Core Features</p>
+          <h2 className="landing-sec-title">
+            Everything You Need To Learn Programming
+          </h2>
+          <p className="landing-sec-sub">
+            Learn, build, and improve your code with intelligent assistance.
+          </p>
+        </motion.div>
+
+        <motion.div
+          className="landing-feat-container"
+          initial={reduceMotion ? {} : { opacity: 0, y: 24 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          {FEATURES.map((feature) => {
+            const Icon = feature.icon;
+            const inner = (
+              <>
+                <div className={`landing-feat-bar ${feature.barClass}`} />
+                <div className={`landing-feat-icon ${feature.iconClass}`}>
+                  <Icon size={22} aria-hidden />
+                </div>
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+                <span className={`landing-feat-tag ${feature.tagClass}`}>
+                  {feature.tag}
+                </span>
+              </>
+            );
+
+            if (feature.action === "assistant") {
+              return (
+                <OpenAssistantButton
+                  key={feature.id}
+                  className="landing-feat-card landing-feat-card--clickable"
+                >
+                  {inner}
+                </OpenAssistantButton>
+              );
+            }
+
+            if (feature.action === "get-started") {
+              return (
+                <a
+                  key={feature.id}
+                  href="#get-started"
+                  className="landing-feat-card landing-feat-card--clickable"
+                >
+                  {inner}
+                </a>
+              );
+            }
+
+            return (
+              <div key={feature.id} className="landing-feat-card">
+                {inner}
+              </div>
+            );
+          })}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/LanguagePickerSection.jsx
+--------------------------------------------------------------------------------
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getLanguages } from "../../docs/services/api";
+
+const languageMeta = {
+  javascript: {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/javascript/javascript-original.svg",
+    color: "#f7df1e",
+  },
+  python: {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg",
+    color: "#3776ab",
+  },
+  java: {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/java/java-original.svg",
+    color: "#b07219",
+  },
+  cpp: {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/cplusplus/cplusplus-original.svg",
+    color: "#f34b7d",
+  },
+  "c++": {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/cplusplus/cplusplus-original.svg",
+    color: "#f34b7d",
+  },
+  c: {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/c/c-original.svg",
+    color: "#555555",
+  },
+  rust: {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/rust/rust-original.svg",
+    color: "#dea584",
+  },
+  go: {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/go/go-original.svg",
+    color: "#00add8",
+  },
+  php: {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/php/php-original.svg",
+    color: "#777bb4",
+  },
+  ruby: {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/ruby/ruby-original.svg",
+    color: "#701516",
+  },
+  sql: {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/postgresql/postgresql-original.svg",
+    color: "#e38c00",
+  },
+  batchfile: { icon: "⌨️", color: "#4d4d4d" },
+  powershell: {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/powershell/powershell-original.svg",
+    color: "#012456",
+  },
+  "q#": { icon: "⚛️", color: "#0078d4" },
+  r: {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/r/r-original.svg",
+    color: "#276dc3",
+  },
+  csharp: {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg",
+    color: "#239120",
+  },
+  "c#": {
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg",
+    color: "#239120",
+  },
+};
+
+const fallbackLanguages = [
+  "Batchfile",
+  "C",
+  "C#",
+  "C++",
+  "Go",
+  "Java",
+  "JavaScript",
+  "PHP",
+  "Powershell",
+  "Python",
+  "Q#",
+  "R",
+  "Ruby",
+  "Rust",
+  "SQL",
+];
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+export default function LanguagePickerSection({
+  onLanguageSelect,
+  continueLanguage,
+}) {
+  const [languages, setLanguages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [hoveredLanguage, setHoveredLanguage] = useState(null);
+  const [selectedLanguage, setSelectedLanguage] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      getLanguages()
+        .then(({ data }) => {
+          const apiLanguages = Array.isArray(data.languages)
+            ? data.languages
+            : [];
+          setLanguages(
+            apiLanguages.length > 0 ? apiLanguages : fallbackLanguages,
+          );
+        })
+        .catch((err) => {
+          const status = err.response?.status;
+          const detail = err.response?.data?.error || err.message;
+          console.error(
+            "Error loading languages:",
+            status ? `${status}: ${detail}` : detail,
+          );
+          setLanguages(fallbackLanguages);
+        })
+        .finally(() => setLoading(false));
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleLanguageSelect = (language) => {
+    setSelectedLanguage(language);
+    setTimeout(() => {
+      onLanguageSelect(language);
+    }, 300);
+  };
+
+  if (loading) {
+    return (
+      <section id="get-started" className="landing-get-started">
+        <div className="landing-container">
+          <div className="loading">
+            <div className="spinner-container">
+              <div className="spinner" />
+              <div className="spinner-inner" />
+            </div>
+            <p>Discovering available languages…</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section id="get-started" className="landing-get-started">
+      <div className="landing-container">
+        <p className="landing-section-label">Get started</p>
+        <h2>Choose your programming language</h2>
+        <p className="landing-section-desc">
+          Pick a stack to open docs, courses, playground, and daily challenges.
+        </p>
+
+        {continueLanguage ? (
+          <button
+            type="button"
+            className="btn-secondary continue-stack-btn"
+            onClick={() =>
+              navigate(`/language/${encodeURIComponent(continueLanguage)}`)
+            }
+            style={{ marginBottom: "1.5rem" }}
+          >
+            Continue with {continueLanguage} →
+          </button>
+        ) : null}
+
+        <div className="lang-grid">
+          {languages.map((language, i) => {
+            const meta = languageMeta[language.toLowerCase()] || {
+              icon: "💻",
+              color: "#64748b",
+            };
+            const rgba = meta.color.startsWith("#")
+              ? hexToRgba(meta.color, 0.2)
+              : "rgba(255,255,255,0.1)";
+            const isHovered = hoveredLanguage === language;
+            const isSelected = selectedLanguage === language;
+
+            return (
+              <div
+                key={language}
+                onClick={() => handleLanguageSelect(language)}
+                className={`lang-card fade-up ${isSelected ? "selected" : ""}`}
+                style={{
+                  "--lang-color": meta.color,
+                  "--lang-color-alpha": rgba,
+                  animationDelay: `${i * 0.1}s`,
+                  transform: isHovered
+                    ? "translateY(-12px) scale(1.03)"
+                    : "translateY(0) scale(1)",
+                  opacity: isSelected ? 0.8 : 1,
+                }}
+                onMouseEnter={() => setHoveredLanguage(language)}
+                onMouseLeave={() => setHoveredLanguage(null)}
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const y = e.clientY - rect.top;
+                  e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+                  e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+                }}
+              >
+                <div
+                  className="lang-icon-wrapper"
+                  style={{
+                    transform: isHovered
+                      ? "scale(1.15) rotate(8deg)"
+                      : "scale(1) rotate(0deg)",
+                  }}
+                >
+                  {meta.icon.startsWith("http") ? (
+                    <img src={meta.icon} alt={language} />
+                  ) : (
+                    <span style={{ fontSize: "2.5rem" }}>{meta.icon}</span>
+                  )}
+                </div>
+                <span
+                  className="lang-name"
+                  style={{
+                    transform: isHovered ? "translateY(-2px)" : "translateY(0)",
+                    color: isHovered ? meta.color : "#fff",
+                  }}
+                >
+                  {language}
+                </span>
+                <span
+                  className="lang-explorer"
+                  style={{
+                    opacity: isHovered ? 1 : 0,
+                    transform: isHovered ? "translateY(0)" : "translateY(10px)",
+                    color: isHovered ? meta.color : "var(--txt-3)",
+                  }}
+                >
+                  {isSelected ? "Loading..." : "Explore Docs →"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/Marquee.jsx
+--------------------------------------------------------------------------------
+import React from "react";
+import { useReducedMotion } from "framer-motion";
+
+export default function Marquee({ children, reverse = false, speed = 28 }) {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <div className="landing-marquee-wrap">
+      <div
+        className={`landing-marquee-track ${
+          reduceMotion
+            ? ""
+            : reverse
+              ? "landing-marquee-track--reverse"
+              : "landing-marquee-track--forward"
+        }`}
+        style={reduceMotion ? undefined : { animationDuration: `${speed}s` }}
+      >
+        <div style={{ display: "flex", gap: "0.75rem" }}>{children}</div>
+        <div style={{ display: "flex", gap: "0.75rem" }} aria-hidden>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/ModulesSection.jsx
+--------------------------------------------------------------------------------
+import React, { useRef } from "react";
+import { motion, useReducedMotion, useInView } from "framer-motion";
+import { BookOpen, Bot, Shield } from "lucide-react";
+import OpenAssistantButton from "./OpenAssistantButton";
+
+const MODULES = [
+  {
+    id: "polym_mentor",
+    icon: Bot,
+    name: "PolyMentor",
+    tagline: "AI Coding Assistant",
+    description:
+      "Your intelligent programming mentor. Debug code, understand errors, learn best practices, and get step-by-step guidance.",
+    features: [
+      "Answers programming questions",
+      "Explains errors & exceptions",
+      "Suggests optimized solutions",
+      "Improves from user feedback",
+    ],
+    cardClass: "landing-module-card--indigo",
+    iconClass: "landing-module-icon--indigo",
+    action: "assistant",
+  },
+  {
+    id: "polycode-website",
+    icon: BookOpen,
+    name: "PolyCode Website",
+    tagline: "Learning Platform",
+    description:
+      "The main educational hub with courses, video lectures, exercises, progress tracking, and AI-powered chat.",
+    features: [
+      "Course management system",
+      "Video lectures & tutorials",
+      "Programming exercises",
+      "Student progress tracking",
+    ],
+    cardClass: "landing-module-card--violet",
+    iconClass: "landing-module-icon--violet",
+    action: "get-started",
+  },
+  {
+    id: "polyguard",
+    icon: Shield,
+    name: "PolyGuard",
+    tagline: "Security Analyzer",
+    description:
+      "AI/ML-based code security analysis that detects vulnerabilities, scores risk, and suggests improvements.",
+    features: [
+      "Vulnerability detection",
+      "Security scoring",
+      "Unsafe practice alerts",
+      "Risk assessment reports",
+    ],
+    cardClass: "landing-module-card--cyan",
+    iconClass: "landing-module-icon--cyan",
+    action: null,
+  },
+];
+
+export default function ModulesSection() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <section id="modules" ref={ref} className="landing-section">
+      <div className="landing-container">
+        <motion.div
+          initial={reduceMotion ? {} : { opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+        >
+          <p className="landing-section-label">Three pillars</p>
+          <h2>One ecosystem for learning and security</h2>
+          <p className="landing-section-desc">
+            PolyCode brings together mentorship, structured learning, and automated
+            security analysis in a single platform built for students and developers.
+          </p>
+        </motion.div>
+
+        <div className="landing-modules-grid">
+          {MODULES.map((module, index) => {
+            const Icon = module.icon;
+            const cardContent = (
+              <>
+                <div className={`landing-module-icon ${module.iconClass}`}>
+                  <Icon size={24} aria-hidden />
+                </div>
+                <p className="landing-module-tagline">{module.tagline}</p>
+                <h3>{module.name}</h3>
+                <p>{module.description}</p>
+                <ul className="landing-module-features">
+                  {module.features.map((feature) => (
+                    <li key={feature}>{feature}</li>
+                  ))}
+                </ul>
+              </>
+            );
+
+            if (module.action === "assistant") {
+              return (
+                <motion.article
+                  key={module.id}
+                  className={`landing-module-card ${module.cardClass}`}
+                  initial={reduceMotion ? {} : { opacity: 0, y: 30 }}
+                  animate={inView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.55, delay: index * 0.15 }}
+                >
+                  {cardContent}
+                  <div style={{ marginTop: "1.25rem" }}>
+                    <OpenAssistantButton className="landing-btn-indigo">
+                      Talk to PolyMentor
+                    </OpenAssistantButton>
+                  </div>
+                </motion.article>
+              );
+            }
+
+            if (module.action === "get-started") {
+              return (
+                <motion.a
+                  key={module.id}
+                  href="#get-started"
+                  className={`landing-module-card landing-module-card--clickable ${module.cardClass}`}
+                  initial={reduceMotion ? {} : { opacity: 0, y: 30 }}
+                  animate={inView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.55, delay: index * 0.15 }}
+                >
+                  {cardContent}
+                </motion.a>
+              );
+            }
+
+            return (
+              <motion.article
+                key={module.id}
+                className={`landing-module-card ${module.cardClass}`}
+                initial={reduceMotion ? {} : { opacity: 0, y: 30 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.55, delay: index * 0.15 }}
+              >
+                {cardContent}
+              </motion.article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/Navbar.jsx
+--------------------------------------------------------------------------------
+import React from "react";
+import { ArrowRight } from "lucide-react";
+
+const NAV_LINKS = [
+  {
+    href: "#modules",
+    label: "Features",
+  },
+  {
+    href: "#get-started",
+    label: "Languages",
+  },
+  {
+    href: "/docs",
+    label: "Documentation",
+  },
+];
+
+export default function Navbar() {
+  return (
+    <header className="landing-navbar">
+      {" "}
+      <div className="landing-container">
+        {" "}
+        <div className="landing-navbar-inner">
+          ```
+          <a href="#top" className="landing-brand">
+            <div className="landing-brand-mark">
+              <span>P</span>
+            </div>
+
+            <div className="landing-brand-text">
+              <span className="landing-logo-text">PolyCode</span>
+
+              <span className="landing-logo-sub">AI Learning Platform</span>
+            </div>
+          </a>
+          <nav className="landing-nav-links">
+            {NAV_LINKS.map((link) => (
+              <a key={link.label} href={link.href} className="landing-nav-link">
+                {link.label}
+              </a>
+            ))}
+          </nav>
+          <a href="#get-started" className="landing-btn-primary">
+            Start Learning
+            <ArrowRight size={16} />
+          </a>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/OpenAssistantButton.jsx
+--------------------------------------------------------------------------------
+import React from "react";
+import { MessageCircle } from "lucide-react";
+
+export default function OpenAssistantButton({ className = "", children }) {
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        window.dispatchEvent(new CustomEvent("open-polycode-assistant"))
+      }
+      className={className}
+    >
+      {children ?? (
+        <>
+          <MessageCircle size={16} aria-hidden />
+          Talk to PolyMentor
+        </>
+      )}
+    </button>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/PolyCodeLogo.jsx
+--------------------------------------------------------------------------------
+import React from "react";
+
+export default function PolyCodeLogo({ className = "", height = 40, glow = true }) {
+  return (
+    <span
+      className={`polycode-logo-wrap ${glow ? "polycode-logo-wrap--glow" : ""}`}
+    >
+      {glow ? (
+        <>
+          <span className="polycode-logo-aura" aria-hidden />
+          <span className="polycode-logo-aura polycode-logo-aura--delay" aria-hidden />
+        </>
+      ) : null}
+      <img
+        src="/images/polycode-logo.png"
+        alt="PolyCode — Learn. Code. Secure."
+        height={height}
+        className={`polycode-logo-img ${className}`}
+        style={{ width: "auto", maxHeight: height }}
+      />
+    </span>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/StatsSection.jsx
+--------------------------------------------------------------------------------
+import React from "react";
+
+const STATS = [
+  { number: "15+", label: "Programming Languages" },
+  { number: "24/7", label: "AI Assistance" },
+  { number: "100+", label: "Learning Topics" },
+  { number: "Built-In", label: "Security Analysis" },
+];
+
+export default function StatsSection() {
+  return (
+    <section className="landing-stats">
+      <div className="landing-container">
+        <div className="landing-stats-grid">
+          {STATS.map((stat) => (
+            <div key={stat.label} className="landing-stat-card">
+              <h3>{stat.number}</h3>
+              <p>{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /components/Untitled
+--------------------------------------------------------------------------------
+import React, { useRef } from "react";
+import { motion, useReducedMotion, useInView } from "framer-motion";
+import { BookOpen, Bot, Shield } from "lucide-react";
+import OpenAssistantButton from "./OpenAssistantButton";
+
+const FEATURES = [
+  {
+    id: "courses",
+    icon: BookOpen,
+    title: "Structured Courses",
+    description:
+      "Bite-sized lessons with live coding challenges you run right in your browser. Progress tracked, XP earned.",
+    tag: "15+ Languages",
+    barClass: "landing-feat-bar--violet",
+    iconClass: "landing-feat-icon--violet",
+    tagClass: "landing-feat-tag--violet",
+    action: "get-started",
+  },
+  {
+    id: "polymentor",
+    icon: Bot,
+    title: "PolyMentor AI",
+    description:
+      "An AI mentor that knows your current lesson, your code, and your errors — giving help that actually fits your context.",
+    tag: "Always On",
+    barClass: "landing-feat-bar--cyan",
+    iconClass: "landing-feat-icon--cyan",
+    tagClass: "landing-feat-tag--cyan",
+    action: "assistant",
+  },
+  {
+    id: "polyguard",
+    icon: Shield,
+    title: "Security Analysis",
+    description:
+      "PolyGuard scans your code for vulnerabilities as you write. Secure habits become second nature, not an afterthought.",
+    tag: "PolyGuard",
+    barClass: "landing-feat-bar--orange",
+    iconClass: "landing-feat-icon--orange",
+    tagClass: "landing-feat-tag--orange",
+    action: null,
+  },
+];
+
+export default function FeaturesSection() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <section id="modules" ref={ref} className="landing-section">
+      <div className="landing-container">
+        <motion.div
+          initial={reduceMotion ? {} : { opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+        >
+          <p className="landing-sec-label">What you get</p>
+          <h2 className="landing-sec-title">Everything in one platform</h2>
+          <p className="landing-sec-sub">
+            From your first hello world to shipping production-ready, secure
+            code.
+          </p>
+        </motion.div>
+
+        <motion.div
+          className="landing-feat-container"
+          initial={reduceMotion ? {} : { opacity: 0, y: 24 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          {FEATURES.map((feature) => {
+            const Icon = feature.icon;
+            const inner = (
+              <>
+                <div className={`landing-feat-bar ${feature.barClass}`} />
+                <div className={`landing-feat-icon ${feature.iconClass}`}>
+                  <Icon size={22} aria-hidden />
+                </div>
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+                <span className={`landing-feat-tag ${feature.tagClass}`}>
+                  {feature.tag}
+                </span>
+              </>
+            );
+
+            if (feature.action === "assistant") {
+              return (
+                <OpenAssistantButton
+                  key={feature.id}
+                  className="landing-feat-card landing-feat-card--clickable"
+                >
+                  {inner}
+                </OpenAssistantButton>
+              );
+            }
+
+            if (feature.action === "get-started") {
+              return (
+                <a
+                  key={feature.id}
+                  href="#get-started"
+                  className="landing-feat-card landing-feat-card--clickable"
+                >
+                  {inner}
+                </a>
+              );
+            }
+
+            return (
+              <div key={feature.id} className="landing-feat-card">
+                {inner}
+              </div>
+            );
+          })}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /lib/assistantApi.js
+--------------------------------------------------------------------------------
+import { getApiBase } from "../../../config/apiBase";
+
+function getAuthHeaders() {
+  const headers = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+
+  const token = localStorage.getItem("token");
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
+export async function postAssistantChat({ message, history, session_id, context }) {
+  const url = `${getApiBase()}/chat/assistant`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      message,
+      history,
+      session_id,
+      context: context || {},
+    }),
+  });
+
+  if (res.status === 429) {
+    throw new Error(
+      "Too many messages. Please wait a moment before trying again.",
+    );
+  }
+
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const errBody = await res.json();
+      detail = errBody.error || errBody.detail || detail;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail || `Request failed (${res.status})`);
+  }
+
+  const data = await res.json();
+  if (!data.success) {
+    throw new Error("Assistant did not return a successful response.");
+  }
+  return data;
+}
+
+export async function fetchAssistantSession(sessionId) {
+  const url = `${getApiBase()}/chat/assistant/session/${encodeURIComponent(sessionId)}`;
+
+  const res = await fetch(url, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!res.ok) {
+    return null;
+  }
+
+  return res.json();
+}
+
+export async function clearAssistantSession(sessionId) {
+  const url = `${getApiBase()}/chat/assistant/session/${encodeURIComponent(sessionId)}`;
+
+  await fetch(url, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /lib/assistantConfig.js
+--------------------------------------------------------------------------------
+const publicUrl = process.env.PUBLIC_URL || "";
+
+export const ASSISTANT_CONFIG = {
+  name: "PolyMentor",
+  shortName: "PM",
+  tagline: "Your AI programming mentor",
+  welcomeMessage:
+    "Welcome to **PolyMentor**. I can explain PolyCode, guide your learning path, and help you understand PolyGuard security — ask me anything.",
+  storageKey: "polycode_assistant_session",
+  avatarSrc: `${publicUrl}/images/assistant.png`,
+  inputPlaceholder: "Type your question here…",
+  poweredByLabel: "PolyCode Ecosystem · AI Assistant",
+  quickPrompts: [
+    "What is PolyCode?",
+    "How does PolyMentor work?",
+    "Tell me about PolyGuard",
+    "How do I get started?",
+  ],
+};
+
+
+--------------------------------------------------------------------------------
+FILE: /lib/useTypewriter.js
+--------------------------------------------------------------------------------
+import { useEffect, useRef, useState } from "react";
+
+export function useTypewriter(text, active, charDelayMs = 16) {
+  const [displayed, setDisplayed] = useState(() => (active ? "" : text));
+  const [done, setDone] = useState(!active);
+
+  const textRef = useRef(text);
+  const activeRef = useRef(active);
+  textRef.current = text;
+  activeRef.current = active;
+
+  useEffect(() => {
+    if (!active) {
+      setDisplayed(text);
+      setDone(true);
+      return;
+    }
+
+    setDisplayed("");
+    setDone(false);
+
+    let index = 0;
+
+    const id = window.setInterval(() => {
+      index += 1;
+      const slice = textRef.current.slice(0, index);
+      setDisplayed(slice);
+
+      if (index >= textRef.current.length) {
+        window.clearInterval(id);
+        setDone(true);
+      }
+    }, charDelayMs);
+
+    return () => {
+      window.clearInterval(id);
+    };
+  }, [text, active, charDelayMs]);
+
+  return { displayed, done };
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /pages/LandingPage.jsx
+--------------------------------------------------------------------------------
+import React from "react";
+import AnimatedBackground from "../components/AnimatedBackground";
+import Footer from "../components/Footer";
+import Hero from "../components/Hero";
+import HowItWorksSection from "../components/HowItWorksSection";
+import LanguagePickerSection from "../components/LanguagePickerSection";
+import Navbar from "../components/Navbar";
+import StatsSection from "../components/StatsSection";
+import "../landing.css";
+
+export default function LandingPage({ onLanguageSelect, continueLanguage }) {
+  return (
+    <div className="polycode-landing">
+      <AnimatedBackground />
+      <div
+        className="polycode-grid"
+        style={{ position: "relative", minHeight: "100vh" }}
+      >
+        <Navbar />
+        <main>
+          <Hero />
+          <HowItWorksSection />
+          <StatsSection />
+          <LanguagePickerSection
+            onLanguageSelect={onLanguageSelect}
+            continueLanguage={continueLanguage}
+          />
+        </main>
+        <Footer />
+      </div>
+    </div>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /landing.css
+--------------------------------------------------------------------------------
+/* Scoped landing + assistant styles — only under .polycode-landing */
+
+.polycode-landing {
+  --landing-bg: var(--ink, #03050a);
+  --landing-fg: var(--txt-0, #f8fafc);
+  --landing-muted: var(--txt-2, #94a3b8);
+  --landing-ink: var(--ink-3, #12141c);
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgba(139, 92, 246, 0.08) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(0, 242, 255, 0.05) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 50% 100%,
+      rgba(var(--acid-rgb), 0.03) 0%,
+      transparent 50%
+    ),
+    var(--landing-bg);
+  color: var(--landing-fg);
+  font-family: var(
+    --font-body,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif
+  );
+  min-height: 100vh;
+}
+
+.polycode-landing .polycode-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.polycode-landing .landing-container {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Background */
+.landing-bg-wrap {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.landing-bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+}
+
+.landing-bg-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.landing-bg-grid-drift {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: landing-grid-drift 20s linear infinite;
+}
+
+@keyframes landing-grid-drift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 48px 48px;
+  }
+}
+
+/* ==========================================
+NAVBAR
+========================================== */
+
+.landing-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  z-index: 1000;
+
+  background: rgba(3, 5, 10, 0.8);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.landing-navbar-inner {
+  height: 76px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ==========================================
+  BRAND
+  ========================================== */
+
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+
+  text-decoration: none;
+}
+
+.landing-brand-mark {
+  width: 42px;
+  height: 42px;
+
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 1rem;
+  font-weight: 800;
+
+  color: #fff;
+
+  background: linear-gradient(135deg, #00f2ff, #5b7fff);
+}
+
+.landing-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-logo-text {
+  color: #ffffff;
+
+  font-size: 1.15rem;
+  font-weight: 800;
+
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.landing-logo-sub {
+  margin-top: 0.2rem;
+
+  color: #64748b;
+
+  font-size: 0.7rem;
+
+  font-weight: 600;
+
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ==========================================
+  NAVIGATION
+  ========================================== */
+
+.landing-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.landing-nav-link {
+  position: relative;
+
+  color: #94a3b8;
+
+  text-decoration: none;
+
+  font-size: 0.95rem;
+  font-weight: 500;
+
+  transition: color 0.25s ease;
+}
+
+.landing-nav-link:hover {
+  color: #ffffff;
+}
+
+.landing-nav-link::after {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  bottom: -8px;
+
+  width: 0;
+  height: 2px;
+
+  border-radius: 999px;
+
+  background: #00f2ff;
+
+  transition: width 0.25s ease;
+}
+
+.landing-nav-link:hover::after {
+  width: 100%;
+}
+
+/* ==========================================
+  BUTTON
+  ========================================== */
+
+.landing-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  height: 46px;
+
+  padding: 0 1.25rem;
+
+  border-radius: 14px;
+
+  text-decoration: none;
+
+  font-size: 0.9rem;
+  font-weight: 700;
+
+  color: #0f172a;
+  background: #ffffff;
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.landing-btn-primary:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 12px 30px rgba(255, 255, 255, 0.15);
+}
+
+/* ==========================================
+  MOBILE
+  ========================================== */
+
+@media (max-width: 900px) {
+  .landing-nav-links {
+    display: none;
+  }
+
+  .landing-btn-primary {
+    display: none;
+  }
+
+  .landing-navbar-inner {
+    height: 70px;
+  }
+}
+
+/* Logo */
+.polycode-logo-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.85rem;
+  background:
+    linear-gradient(135deg, rgba(0, 242, 255, 0.08), transparent 35%),
+    linear-gradient(315deg, rgba(var(--acid-rgb), 0.08), transparent 38%),
+    rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.polycode-logo-wrap--glow {
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.polycode-logo-aura {
+  pointer-events: none;
+  position: absolute;
+  inset: -6px;
+  border-radius: 1rem;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(var(--acid-rgb), 0.06) 0%,
+    transparent 72%
+  );
+  filter: blur(8px);
+  animation: logo-aura-pulse 3.5s ease-in-out infinite;
+}
+
+.polycode-logo-aura--delay {
+  animation-delay: 1.75s;
+  opacity: 0.7;
+}
+
+.polycode-logo-img {
+  position: relative;
+  z-index: 1;
+  object-fit: contain;
+  object-position: left;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+@keyframes logo-aura-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.03);
+  }
+}
+
+/* Hero */
+.landing-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 7rem 0 5rem;
+}
+
+.landing-hero-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at top,
+    rgba(var(--acid-rgb), 0.03),
+    transparent 55%
+  );
+}
+
+.landing-hero-grid {
+  position: relative;
+  display: grid;
+  align-items: center;
+  gap: 3rem;
+}
+
+.landing-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--acid);
+  background: var(--acid-dim);
+  padding: 0.375rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--acid);
+}
+
+.landing-hero h1 {
+  max-width: 42rem;
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin: 0;
+}
+
+.landing-hero-shimmer {
+  display: block;
+  color: var(--acid);
+}
+
+@keyframes landing-text-shimmer {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.landing-hero-lead {
+  margin-top: 1.5rem;
+  max-width: 36rem;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: #94a3b8;
+}
+
+.landing-hero-actions {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.landing-hero-image-wrap {
+  position: relative;
+}
+
+.landing-hero-image-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: -1rem;
+  border-radius: 1.5rem;
+  background: linear-gradient(
+    to bottom right,
+    rgba(0, 242, 255, 0.06),
+    transparent,
+    rgba(139, 92, 246, 0.05)
+  );
+  filter: blur(24px);
+}
+
+.landing-hero-image {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 80px -20px rgba(0, 0, 0, 0.7);
+}
+
+.landing-hero-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.landing-floating-code {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.landing-code-snippet {
+  position: absolute;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.25rem 0.625rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.625rem;
+  color: var(--txt-3, #60607a);
+  backdrop-filter: blur(4px);
+}
+
+/* Sections */
+.landing-section {
+  position: relative;
+  padding: 6rem 0;
+}
+
+.landing-section-alt {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.landing-section-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--acid);
+}
+
+.landing-section h2 {
+  margin: 0.75rem 0 0;
+  font-size: clamp(1.875rem, 4vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.landing-section-desc {
+  margin-top: 1rem;
+  font-size: 1.125rem;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+/* Module cards */
+.landing-modules-grid {
+  margin-top: 3.5rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.landing-module-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.5rem;
+  transition: transform 0.2s;
+}
+
+.landing-module-card:hover {
+  transform: translateY(-4px);
+}
+
+.landing-module-card--indigo {
+  background: linear-gradient(
+    to bottom,
+    rgba(99, 102, 241, 0.2),
+    rgba(79, 70, 229, 0.05)
+  );
+}
+
+.landing-module-card--violet {
+  background: linear-gradient(
+    to bottom,
+    rgba(139, 92, 246, 0.2),
+    rgba(124, 58, 237, 0.05)
+  );
+}
+
+.landing-module-card--cyan {
+  background: linear-gradient(
+    to bottom,
+    rgba(34, 211, 238, 0.2),
+    rgba(6, 182, 212, 0.05)
+  );
+}
+
+.landing-module-card--clickable {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+}
+
+.landing-module-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1.25rem;
+  border-radius: 0.75rem;
+}
+
+.landing-module-icon--indigo {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+}
+.landing-module-icon--violet {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+}
+.landing-module-icon--cyan {
+  background: rgba(34, 211, 238, 0.15);
+  color: #22d3ee;
+}
+
+.landing-module-tagline {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.landing-module-card h3 {
+  margin: 0.25rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.landing-module-card p {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #94a3b8;
+}
+
+.landing-module-features {
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-module-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: #cbd5e1;
+}
+
+.landing-module-features li::before {
+  content: "";
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin-top: 0.5rem;
+  border-radius: 50%;
+  background: #818cf8;
+}
+
+/* How it works */
+.landing-steps-grid {
+  margin-top: 3.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.landing-step-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0c1019;
+  padding: 1.25rem;
+}
+
+.landing-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+  background: var(--acid-dim);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--acid);
+}
+
+.landing-step-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 0.75rem;
+  border-radius: 0.75rem;
+  background: var(--acid-dim);
+  color: var(--acid);
+}
+
+.landing-step-card h3 {
+  margin: 0;
+  font-weight: 600;
+  color: #fff;
+}
+
+.landing-step-card p {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #94a3b8;
+}
+
+/* Vision */
+.landing-vision-grid {
+  display: grid;
+  gap: 3rem;
+  align-items: center;
+}
+
+.landing-vision-list {
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-vision-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: #cbd5e1;
+}
+
+.landing-vision-list li::before {
+  content: "";
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin-top: 0.5rem;
+  border-radius: 50%;
+  background: var(--acid);
+}
+
+.landing-tech-panel {
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(135deg, rgba(0, 242, 255, 0.08), transparent 35%),
+    linear-gradient(315deg, rgba(var(--acid-rgb), 0.08), transparent 38%),
+    rgba(255, 255, 255, 0.03);
+  padding: 2rem;
+}
+
+.landing-tech-panel h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.landing-tech-panel p {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.landing-marquee-wrap {
+  position: relative;
+  overflow: hidden;
+  margin-top: 1.5rem;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
+}
+
+.landing-marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 0.75rem;
+}
+
+.landing-marquee-track--forward {
+  animation: landing-marquee 28s linear infinite;
+}
+
+.landing-marquee-track--reverse {
+  animation: landing-marquee-reverse 28s linear infinite;
+}
+
+@keyframes landing-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes landing-marquee-reverse {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.landing-tech-pill {
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #cbd5e1;
+}
+
+/* CTA */
+.landing-cta-box {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(135deg, rgba(0, 242, 255, 0.08), transparent 35%),
+    linear-gradient(315deg, rgba(var(--acid-rgb), 0.08), transparent 38%),
+    rgba(255, 255, 255, 0.03);
+  padding: 3.5rem 2rem;
+  text-align: center;
+}
+
+.landing-cta-box h2 {
+  margin: 0;
+  font-size: clamp(1.875rem, 4vw, 2.25rem);
+  font-weight: 700;
+  color: #fff;
+}
+
+.landing-cta-box p {
+  margin: 1rem auto 0;
+  max-width: 36rem;
+  font-size: 1.125rem;
+  color: #cbd5e1;
+}
+
+.landing-cta-actions {
+  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.landing-cta-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(var(--acid-rgb), 0.03),
+    transparent 70%
+  );
+}
+
+/* Footer */
+.landing-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 2.5rem 0;
+}
+
+.landing-footer-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.landing-footer p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #64748b;
+  text-align: center;
+}
+
+/* Language picker section on landing */
+.landing-get-started {
+  position: relative;
+  padding: 5rem 0 6rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.landing-get-started .lang-grid {
+  margin-top: 2rem;
+}
+
+@import url("../assistant/assistant.css");
+
+@media (min-width: 768px) {
+  .landing-nav-links {
+    display: flex;
+  }
+}
+
+@media (min-width: 640px) {
+  .landing-hero {
+    padding-top: 9rem;
+    padding-bottom: 7rem;
+  }
+  .landing-footer-inner {
+    flex-direction: row;
+  }
+  .landing-footer p {
+    text-align: right;
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-hero-grid {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 4rem;
+  }
+  .landing-modules-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .landing-steps-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .landing-vision-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-bg-grid-drift,
+  .landing-hero-shimmer,
+  .landing-marquee-track--forward,
+  .landing-marquee-track--reverse,
+  .polycode-logo-aura {
+    animation: none;
+  }
+  .polycode-logo-aura {
+    opacity: 0.6;
+  }
+}
+.polycode-landing .landing-feat-container {
+  max-width: 72rem;
+  margin: 0 auto;
+  border-radius: 16px;
+  border: 1px solid var(--v2-border);
+  overflow: hidden;
+  background: var(--v2-bg2);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.polycode-landing .landing-feat-card {
+  position: relative;
+  padding: 2.25rem 1.75rem;
+  border-right: 1px solid var(--v2-border);
+  transition: background 0.2s;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  text-align: left;
+  background: none;
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+  width: 100%;
+  font-family: inherit;
+  cursor: default;
+}
+
+.polycode-landing .landing-feat-card--clickable {
+  cursor: pointer;
+}
+
+.polycode-landing .landing-feat-card:last-child {
+  border-right: none;
+}
+
+.polycode-landing .landing-feat-card:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.polycode-landing .landing-feat-bar {
+  height: 2px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.polycode-landing .landing-feat-bar--violet {
+  background: linear-gradient(90deg, var(--v2-violet), transparent);
+}
+
+.polycode-landing .landing-feat-bar--cyan {
+  background: linear-gradient(90deg, var(--v2-cyan), transparent);
+}
+
+.polycode-landing .landing-feat-bar--orange {
+  background: linear-gradient(90deg, var(--v2-orange), transparent);
+}
+
+.polycode-landing .landing-feat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.polycode-landing .landing-feat-icon--violet {
+  background: rgba(124, 58, 237, 0.14);
+  color: #a78bfa;
+}
+
+.polycode-landing .landing-feat-icon--cyan {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--v2-cyan);
+}
+
+.polycode-landing .landing-feat-icon--orange {
+  background: rgba(251, 146, 60, 0.1);
+  color: var(--v2-orange);
+}
+
+.polycode-landing .landing-feat-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--v2-txt0);
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.02em;
+}
+
+.polycode-landing .landing-feat-card p {
+  font-size: 0.83rem;
+  color: var(--v2-txt1);
+  line-height: 1.68;
+  margin: 0;
+}
+
+.polycode-landing .landing-feat-tag {
+  display: inline-block;
+  margin-top: 1.1rem;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.polycode-landing .landing-feat-tag--violet {
+  background: rgba(124, 58, 237, 0.12);
+  color: #a78bfa;
+}
+
+.polycode-landing .landing-feat-tag--cyan {
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--v2-cyan);
+}
+
+.polycode-landing .landing-feat-tag--orange {
+  background: rgba(251, 146, 60, 0.1);
+  color: var(--v2-orange);
+}
+
+@media (max-width: 768px) {
+  .polycode-landing .landing-feat-container {
+    grid-template-columns: 1fr;
+  }
+  .polycode-landing .landing-feat-card {
+    border-right: none;
+    border-bottom: 1px solid var(--v2-border);
+  }
+  .polycode-landing .landing-feat-card:last-child {
+    border-bottom: none;
+  }
+}
+/* ============================================================
+   landing-v2.css
+   Redesigned Hero, Stats, Features, and Language Picker styles.
+   Loaded AFTER landing.css — scoped under .polycode-landing
+   ============================================================ */
+
+.polycode-landing {
+  --v2-cyan: #00e5ff;
+  --v2-cyan-dim: rgba(0, 229, 255, 0.07);
+  --v2-cyan-border: rgba(0, 229, 255, 0.18);
+  --v2-violet: #7c3aed;
+  --v2-violet-dim: rgba(124, 58, 237, 0.1);
+  --v2-orange: #fb923c;
+  --v2-txt0: #f0f4ff;
+  --v2-txt1: #8896b3;
+  --v2-txt2: #3d4d66;
+  --v2-border: rgba(255, 255, 255, 0.07);
+  --v2-bg2: #080d1a;
+  --v2-bg3: #0c1424;
+  --v2-mono: "JetBrains Mono", "Fira Code", monospace;
+}
+
+/* ============================================================
+     HERO
+     ============================================================ */
+
+.polycode-landing .landing-hero-grid-v2 {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3.5rem;
+  align-items: center;
+  padding-top: 6rem;
+  padding-bottom: 3.5rem;
+  min-height: calc(100vh - 4rem);
+}
+
+.polycode-landing .landing-eyebrow-v2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--v2-cyan-border);
+  background: var(--v2-cyan-dim);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--v2-cyan);
+  margin-bottom: 1.4rem;
+}
+
+.polycode-landing .landing-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--v2-cyan);
+  animation: landing-eyebrow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes landing-eyebrow-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.75);
+  }
+}
+
+.polycode-landing .landing-h1-v2 {
+  font-size: clamp(2.3rem, 4.5vw, 3.6rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: var(--v2-txt0);
+  margin-bottom: 1.2rem;
+}
+
+.polycode-landing .landing-hero-accent {
+  display: block;
+  background: linear-gradient(90deg, var(--v2-cyan), #a78bfa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.polycode-landing .landing-hero-lead-v2 {
+  font-size: 1rem;
+  color: var(--v2-txt1);
+  line-height: 1.72;
+  max-width: 440px;
+  margin-bottom: 2.2rem;
+}
+
+.polycode-landing .landing-hero-actions-v2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.polycode-landing .landing-btn-hero-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.85rem 1.6rem;
+  border-radius: 10px;
+  background: var(--v2-cyan);
+  border: none;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #03050a;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    opacity 0.2s,
+    transform 0.15s;
+}
+
+.polycode-landing .landing-btn-hero-primary:hover {
+  opacity: 0.88;
+  transform: translateY(-2px);
+}
+
+.polycode-landing .landing-btn-hero-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.78rem 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--v2-border);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--v2-txt0);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.polycode-landing .landing-btn-hero-secondary:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Terminal mockup */
+
+.polycode-landing .landing-hero-visual {
+  position: relative;
+}
+
+.polycode-landing .landing-terminal-glow {
+  position: absolute;
+  inset: -40px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 229, 255, 0.055) 0%,
+    transparent 68%
+  );
+  pointer-events: none;
+}
+
+.polycode-landing .landing-terminal {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid var(--v2-cyan-border);
+  background: var(--v2-bg2);
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55);
+}
+
+.polycode-landing .landing-terminal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--v2-border);
+  background: var(--v2-bg3);
+}
+
+.polycode-landing .landing-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.polycode-landing .landing-dot-r {
+  background: #ff5f57;
+}
+.polycode-landing .landing-dot-y {
+  background: #febc2e;
+}
+.polycode-landing .landing-dot-g {
+  background: #28c840;
+}
+
+.polycode-landing .landing-terminal-title {
+  margin-left: auto;
+  font-family: var(--v2-mono);
+  font-size: 0.67rem;
+  color: var(--v2-txt2);
+  letter-spacing: 0.02em;
+}
+
+.polycode-landing .landing-terminal-body {
+  padding: 18px 20px;
+}
+
+.polycode-landing .landing-tc {
+  color: var(--v2-txt2);
+  font-family: var(--v2-mono);
+  font-size: 0.74rem;
+  line-height: 1.85;
+}
+
+.polycode-landing .landing-tl {
+  font-family: var(--v2-mono);
+  font-size: 0.76rem;
+  line-height: 1.9;
+  color: var(--v2-txt0);
+}
+
+.polycode-landing .landing-tk {
+  color: #a78bfa;
+}
+.polycode-landing .landing-tf {
+  color: var(--v2-cyan);
+}
+.polycode-landing .landing-tn {
+  color: var(--v2-orange);
+}
+
+.polycode-landing .landing-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  background: var(--v2-cyan);
+  border-radius: 1px;
+  animation: landing-cursor-blink 1s step-end infinite;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+@keyframes landing-cursor-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.polycode-landing .landing-mentor-box {
+  margin-top: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--v2-cyan-border);
+  background: rgba(0, 229, 255, 0.04);
+  padding: 14px 16px;
+}
+
+.polycode-landing .landing-mentor-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.polycode-landing .landing-mentor-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--v2-violet), var(--v2-cyan));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  font-family: var(--v2-mono);
+  flex-shrink: 0;
+}
+
+.polycode-landing .landing-mentor-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--v2-cyan);
+}
+
+.polycode-landing .landing-mentor-text {
+  font-size: 0.78rem;
+  color: var(--v2-txt1);
+  line-height: 1.65;
+}
+
+.polycode-landing .landing-mentor-text code {
+  font-family: var(--v2-mono);
+  color: var(--v2-cyan);
+  font-size: 0.73rem;
+}
+
+/* ============================================================
+     STATS BAND — single row, 4 columns, never wraps
+     ============================================================ */
+
+.polycode-landing .landing-stats-band {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--v2-border);
+  border-bottom: 1px solid var(--v2-border);
+  background: rgba(0, 229, 255, 0.018);
+}
+
+.polycode-landing .landing-stats-inner {
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.polycode-landing .landing-stat-item {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  padding: 1rem 0.5rem;
+}
+
+.polycode-landing .landing-stat-item:not(:last-child) {
+  border-right: 1px solid var(--v2-border);
+}
+
+.polycode-landing .landing-stat-num {
+  font-size: clamp(1.5rem, 2.6vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--v2-txt0);
+  white-space: nowrap;
+}
+
+.polycode-landing .landing-stat-num span {
+  color: var(--v2-cyan);
+}
+
+.polycode-landing .landing-stat-label {
+  font-size: 0.7rem;
+  color: var(--v2-txt1);
+  font-weight: 500;
+  margin-top: 5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .polycode-landing .landing-stats-inner {
+    flex-wrap: wrap;
+  }
+  .polycode-landing .landing-stat-item {
+    flex: 1 1 50%;
+    padding: 0.75rem 0.5rem;
+  }
+  .polycode-landing .landing-stat-item:nth-child(odd) {
+    border-right: 1px solid var(--v2-border);
+  }
+  .polycode-landing .landing-stat-item:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--v2-border);
+    padding-bottom: 1.25rem;
+  }
+  .polycode-landing .landing-stat-item:nth-child(n + 3) {
+    padding-top: 1.25rem;
+  }
+  .polycode-landing .landing-stat-item:nth-child(2) {
+    border-right: none;
+  }
+  .polycode-landing .landing-stat-item:nth-child(4) {
+    border-right: none;
+  }
+}
+
+/* ============================================================
+     SECTION HEADERS (shared)
+     ============================================================ */
+
+.polycode-landing .landing-sec-label {
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--v2-cyan);
+  margin-bottom: 0.75rem;
+}
+
+.polycode-landing .landing-sec-title {
+  text-align: center;
+  font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--v2-txt0);
+  margin-bottom: 0.6rem;
+}
+
+.polycode-landing .landing-sec-sub {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--v2-txt1);
+  line-height: 1.7;
+  max-width: 30rem;
+  margin: 0 auto 3rem;
+}
+
+/* ============================================================
+     FEATURES — single container, 3 columns in one row
+     ============================================================ */
+
+.polycode-landing .landing-feat-container {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.polycode-landing .landing-feat-card {
+  position: relative;
+  padding: 2.25rem 1.75rem;
+  border: 1px solid var(--v2-border);
+  border-radius: 16px;
+  background: var(--v2-bg2);
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  cursor: default;
+  overflow: hidden;
+}
+
+.polycode-landing .landing-feat-card--clickable {
+  cursor: pointer;
+}
+
+.polycode-landing .landing-feat-card:hover {
+  background: var(--v2-bg3);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.polycode-landing .landing-feat-bar {
+  height: 3px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  border-radius: 16px 16px 0 0;
+}
+
+.polycode-landing .landing-feat-bar--violet {
+  background: linear-gradient(90deg, var(--v2-violet), transparent);
+}
+
+.polycode-landing .landing-feat-bar--cyan {
+  background: linear-gradient(90deg, var(--v2-cyan), transparent);
+}
+
+.polycode-landing .landing-feat-bar--orange {
+  background: linear-gradient(90deg, var(--v2-orange), transparent);
+}
+
+.polycode-landing .landing-feat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.polycode-landing .landing-feat-icon--violet {
+  background: rgba(124, 58, 237, 0.14);
+  color: #a78bfa;
+}
+
+.polycode-landing .landing-feat-icon--cyan {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--v2-cyan);
+}
+
+.polycode-landing .landing-feat-icon--orange {
+  background: rgba(251, 146, 60, 0.1);
+  color: var(--v2-orange);
+}
+
+.polycode-landing .landing-feat-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--v2-txt0);
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.02em;
+}
+
+.polycode-landing .landing-feat-card p {
+  font-size: 0.83rem;
+  color: var(--v2-txt1);
+  line-height: 1.68;
+  margin: 0;
+}
+
+.polycode-landing .landing-feat-tag {
+  display: inline-block;
+  margin-top: 1.1rem;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.polycode-landing .landing-feat-tag--violet {
+  background: rgba(124, 58, 237, 0.12);
+  color: #a78bfa;
+}
+
+.polycode-landing .landing-feat-tag--cyan {
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--v2-cyan);
+}
+
+.polycode-landing .landing-feat-tag--orange {
+  background: rgba(251, 146, 60, 0.1);
+  color: var(--v2-orange);
+}
+
+@media (max-width: 768px) {
+  .polycode-landing .landing-feat-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* ============================================================
+     LANGUAGE PICKER — restyled grid with icons + badges
+     ============================================================ */
+
+.polycode-landing .landing-lang-section {
+  position: relative;
+  z-index: 1;
+  padding: 5rem 0;
+  border-top: 1px solid var(--v2-border);
+}
+
+.polycode-landing .landing-lang-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.85rem;
+}
+
+.polycode-landing .landing-lang-card {
+  border-radius: 12px;
+  border: 1px solid var(--v2-border);
+  background: var(--v2-bg2);
+  padding: 1.35rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    transform 0.18s;
+  position: relative;
+}
+
+.polycode-landing .landing-lang-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: var(--v2-bg3);
+  transform: translateY(-4px);
+}
+
+.polycode-landing .landing-lang-card.is-selected {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.polycode-landing .landing-lang-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.polycode-landing .landing-lang-icon img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.polycode-landing .landing-lang-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--v2-txt0);
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+.polycode-landing .landing-lang-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.polycode-landing .landing-lang-badge--hot {
+  background: rgba(251, 146, 60, 0.12);
+  color: var(--v2-orange);
+}
+
+.polycode-landing .landing-lang-badge--new {
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--v2-cyan);
+}
+
+.polycode-landing .landing-lang-badge--popular {
+  background: rgba(124, 58, 237, 0.12);
+  color: #a78bfa;
+}
+
+@media (max-width: 900px) {
+  .polycode-landing .landing-lang-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .polycode-landing .landing-lang-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .polycode-landing .landing-lang-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================================
+     HOW IT WORKS — connected horizontal flow
+     ============================================================ */
+
+.polycode-landing .landing-flow-container {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.polycode-landing .landing-flow-card {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--v2-bg2);
+  border: 1px solid var(--v2-border);
+  border-radius: 14px;
+  padding: 1.75rem 1.4rem;
+  text-align: left;
+}
+
+.polycode-landing .landing-flow-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--v2-cyan-dim);
+  border: 1px solid var(--v2-cyan-border);
+  color: var(--v2-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.polycode-landing .landing-flow-num {
+  position: absolute;
+  top: 1.4rem;
+  right: 1.4rem;
+  font-family: var(--v2-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--v2-txt2);
+  letter-spacing: 0.04em;
+}
+
+.polycode-landing .landing-flow-card h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--v2-txt0);
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5rem;
+}
+
+.polycode-landing .landing-flow-card p {
+  font-size: 0.82rem;
+  color: var(--v2-txt1);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.polycode-landing .landing-flow-connector {
+  flex: 0 0 auto;
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--v2-cyan);
+  opacity: 0.6;
+  transform-origin: left center;
+}
+
+.polycode-landing .landing-flow-connector svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 900px) {
+  .polycode-landing .landing-flow-container {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .polycode-landing .landing-flow-connector {
+    width: auto;
+    height: 20px;
+    transform: rotate(90deg);
+  }
+}
+
+/* ============================================================
+     HERO RESPONSIVE
+     ============================================================ */
+
+@media (max-width: 900px) {
+  .polycode-landing .landing-hero-grid-v2 {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding-top: 5.5rem;
+  }
+  .polycode-landing .landing-hero-visual {
+    display: none;
+  }
+}
+/* ============================================================
+   landing-v2.css
+   Redesigned Hero, Stats, Features, and Language Picker styles.
+   Loaded AFTER landing.css — scoped under .polycode-landing
+   ============================================================ */
+
+.polycode-landing {
+  --v2-cyan: #00e5ff;
+  --v2-cyan-dim: rgba(0, 229, 255, 0.07);
+  --v2-cyan-border: rgba(0, 229, 255, 0.18);
+  --v2-violet: #7c3aed;
+  --v2-violet-dim: rgba(124, 58, 237, 0.1);
+  --v2-orange: #fb923c;
+  --v2-txt0: #f0f4ff;
+  --v2-txt1: #8896b3;
+  --v2-txt2: #3d4d66;
+  --v2-border: rgba(255, 255, 255, 0.07);
+  --v2-bg2: #080d1a;
+  --v2-bg3: #0c1424;
+  --v2-mono: "JetBrains Mono", "Fira Code", monospace;
+}
+
+/* ============================================================
+     HERO
+     ============================================================ */
+
+.polycode-landing .landing-hero-grid-v2 {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3.5rem;
+  align-items: center;
+  padding-top: 6rem;
+  padding-bottom: 3.5rem;
+  min-height: calc(100vh - 4rem);
+}
+
+.polycode-landing .landing-eyebrow-v2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--v2-cyan-border);
+  background: var(--v2-cyan-dim);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--v2-cyan);
+  margin-bottom: 1.4rem;
+}
+
+.polycode-landing .landing-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--v2-cyan);
+  animation: landing-eyebrow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes landing-eyebrow-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.75);
+  }
+}
+
+.polycode-landing .landing-h1-v2 {
+  font-size: clamp(2.3rem, 4.5vw, 3.6rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: var(--v2-txt0);
+  margin-bottom: 1.2rem;
+}
+
+.polycode-landing .landing-hero-accent {
+  display: block;
+  background: linear-gradient(90deg, var(--v2-cyan), #a78bfa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.polycode-landing .landing-hero-lead-v2 {
+  font-size: 1rem;
+  color: var(--v2-txt1);
+  line-height: 1.72;
+  max-width: 440px;
+  margin-bottom: 2.2rem;
+}
+
+.polycode-landing .landing-hero-actions-v2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.polycode-landing .landing-btn-hero-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.85rem 1.6rem;
+  border-radius: 10px;
+  background: var(--v2-cyan);
+  border: none;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #03050a;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    opacity 0.2s,
+    transform 0.15s;
+}
+
+.polycode-landing .landing-btn-hero-primary:hover {
+  opacity: 0.88;
+  transform: translateY(-2px);
+}
+
+.polycode-landing .landing-btn-hero-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.78rem 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--v2-border);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--v2-txt0);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.polycode-landing .landing-btn-hero-secondary:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Terminal mockup */
+
+.polycode-landing .landing-hero-visual {
+  position: relative;
+}
+
+.polycode-landing .landing-terminal-glow {
+  position: absolute;
+  inset: -40px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 229, 255, 0.055) 0%,
+    transparent 68%
+  );
+  pointer-events: none;
+}
+
+.polycode-landing .landing-terminal {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid var(--v2-cyan-border);
+  background: var(--v2-bg2);
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55);
+}
+
+.polycode-landing .landing-terminal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--v2-border);
+  background: var(--v2-bg3);
+}
+
+.polycode-landing .landing-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.polycode-landing .landing-dot-r {
+  background: #ff5f57;
+}
+.polycode-landing .landing-dot-y {
+  background: #febc2e;
+}
+.polycode-landing .landing-dot-g {
+  background: #28c840;
+}
+
+.polycode-landing .landing-terminal-title {
+  margin-left: auto;
+  font-family: var(--v2-mono);
+  font-size: 0.67rem;
+  color: var(--v2-txt2);
+  letter-spacing: 0.02em;
+}
+
+.polycode-landing .landing-terminal-body {
+  padding: 18px 20px;
+}
+
+.polycode-landing .landing-tc {
+  color: var(--v2-txt2);
+  font-family: var(--v2-mono);
+  font-size: 0.74rem;
+  line-height: 1.85;
+}
+
+.polycode-landing .landing-tl {
+  font-family: var(--v2-mono);
+  font-size: 0.76rem;
+  line-height: 1.9;
+  color: var(--v2-txt0);
+}
+
+.polycode-landing .landing-tk {
+  color: #a78bfa;
+}
+.polycode-landing .landing-tf {
+  color: var(--v2-cyan);
+}
+.polycode-landing .landing-tn {
+  color: var(--v2-orange);
+}
+
+.polycode-landing .landing-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  background: var(--v2-cyan);
+  border-radius: 1px;
+  animation: landing-cursor-blink 1s step-end infinite;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+@keyframes landing-cursor-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.polycode-landing .landing-mentor-box {
+  margin-top: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--v2-cyan-border);
+  background: rgba(0, 229, 255, 0.04);
+  padding: 14px 16px;
+}
+
+.polycode-landing .landing-mentor-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.polycode-landing .landing-mentor-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--v2-violet), var(--v2-cyan));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  font-family: var(--v2-mono);
+  flex-shrink: 0;
+}
+
+.polycode-landing .landing-mentor-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--v2-cyan);
+}
+
+.polycode-landing .landing-mentor-text {
+  font-size: 0.78rem;
+  color: var(--v2-txt1);
+  line-height: 1.65;
+}
+
+.polycode-landing .landing-mentor-text code {
+  font-family: var(--v2-mono);
+  color: var(--v2-cyan);
+  font-size: 0.73rem;
+}
+
+/* ============================================================
+     STATS BAND — single row, 4 columns, never wraps
+     ============================================================ */
+
+.polycode-landing .landing-stats-band {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--v2-border);
+  border-bottom: 1px solid var(--v2-border);
+  background: rgba(0, 229, 255, 0.018);
+}
+
+.polycode-landing .landing-stats-inner {
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.polycode-landing .landing-stat-item {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  padding: 1rem 0.5rem;
+}
+
+.polycode-landing .landing-stat-item:not(:last-child) {
+  border-right: 1px solid var(--v2-border);
+}
+
+.polycode-landing .landing-stat-num {
+  font-size: clamp(1.5rem, 2.6vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--v2-txt0);
+  white-space: nowrap;
+}
+
+.polycode-landing .landing-stat-num span {
+  color: var(--v2-cyan);
+}
+
+.polycode-landing .landing-stat-label {
+  font-size: 0.7rem;
+  color: var(--v2-txt1);
+  font-weight: 500;
+  margin-top: 5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .polycode-landing .landing-stats-inner {
+    flex-wrap: wrap;
+  }
+  .polycode-landing .landing-stat-item {
+    flex: 1 1 50%;
+    padding: 0.75rem 0.5rem;
+  }
+  .polycode-landing .landing-stat-item:nth-child(odd) {
+    border-right: 1px solid var(--v2-border);
+  }
+  .polycode-landing .landing-stat-item:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--v2-border);
+    padding-bottom: 1.25rem;
+  }
+  .polycode-landing .landing-stat-item:nth-child(n + 3) {
+    padding-top: 1.25rem;
+  }
+  .polycode-landing .landing-stat-item:nth-child(2) {
+    border-right: none;
+  }
+  .polycode-landing .landing-stat-item:nth-child(4) {
+    border-right: none;
+  }
+}
+
+/* ============================================================
+     SECTION HEADERS (shared)
+     ============================================================ */
+
+.polycode-landing .landing-sec-label {
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--v2-cyan);
+  margin-bottom: 0.75rem;
+}
+
+.polycode-landing .landing-sec-title {
+  text-align: center;
+  font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--v2-txt0);
+  margin-bottom: 0.6rem;
+}
+
+.polycode-landing .landing-sec-sub {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--v2-txt1);
+  line-height: 1.7;
+  max-width: 30rem;
+  margin: 0 auto 3rem;
+}
+
+/* ============================================================
+     FEATURES — single container, 3 columns in one row
+     ============================================================ */
+
+.polycode-landing .landing-feat-container {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.polycode-landing .landing-feat-card {
+  position: relative;
+  padding: 2.25rem 1.75rem;
+  border: 1px solid var(--v2-border);
+  border-radius: 16px;
+  background: var(--v2-bg2);
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  cursor: default;
+  overflow: hidden;
+}
+
+.polycode-landing .landing-feat-card--clickable {
+  cursor: pointer;
+}
+
+.polycode-landing .landing-feat-card:hover {
+  background: var(--v2-bg3);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.polycode-landing .landing-feat-bar {
+  height: 3px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  border-radius: 16px 16px 0 0;
+}
+
+.polycode-landing .landing-feat-bar--violet {
+  background: linear-gradient(90deg, var(--v2-violet), transparent);
+}
+
+.polycode-landing .landing-feat-bar--cyan {
+  background: linear-gradient(90deg, var(--v2-cyan), transparent);
+}
+
+.polycode-landing .landing-feat-bar--orange {
+  background: linear-gradient(90deg, var(--v2-orange), transparent);
+}
+
+.polycode-landing .landing-feat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.polycode-landing .landing-feat-icon--violet {
+  background: rgba(124, 58, 237, 0.14);
+  color: #a78bfa;
+}
+
+.polycode-landing .landing-feat-icon--cyan {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--v2-cyan);
+}
+
+.polycode-landing .landing-feat-icon--orange {
+  background: rgba(251, 146, 60, 0.1);
+  color: var(--v2-orange);
+}
+
+.polycode-landing .landing-feat-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--v2-txt0);
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.02em;
+}
+
+.polycode-landing .landing-feat-card p {
+  font-size: 0.83rem;
+  color: var(--v2-txt1);
+  line-height: 1.68;
+  margin: 0;
+}
+
+.polycode-landing .landing-feat-tag {
+  display: inline-block;
+  margin-top: 1.1rem;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.polycode-landing .landing-feat-tag--violet {
+  background: rgba(124, 58, 237, 0.12);
+  color: #a78bfa;
+}
+
+.polycode-landing .landing-feat-tag--cyan {
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--v2-cyan);
+}
+
+.polycode-landing .landing-feat-tag--orange {
+  background: rgba(251, 146, 60, 0.1);
+  color: var(--v2-orange);
+}
+
+@media (max-width: 768px) {
+  .polycode-landing .landing-feat-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* ============================================================
+     LANGUAGE PICKER — restyled grid with icons + badges
+     ============================================================ */
+
+.polycode-landing .landing-lang-section {
+  position: relative;
+  z-index: 1;
+  padding: 5rem 0;
+  border-top: 1px solid var(--v2-border);
+}
+
+.polycode-landing .landing-lang-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.85rem;
+}
+
+.polycode-landing .landing-lang-card {
+  border-radius: 12px;
+  border: 1px solid var(--v2-border);
+  background: var(--v2-bg2);
+  padding: 1.35rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    transform 0.18s;
+  position: relative;
+}
+
+.polycode-landing .landing-lang-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: var(--v2-bg3);
+  transform: translateY(-4px);
+}
+
+.polycode-landing .landing-lang-card.is-selected {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.polycode-landing .landing-lang-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.polycode-landing .landing-lang-icon img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.polycode-landing .landing-lang-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--v2-txt0);
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+.polycode-landing .landing-lang-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.polycode-landing .landing-lang-badge--hot {
+  background: rgba(251, 146, 60, 0.12);
+  color: var(--v2-orange);
+}
+
+.polycode-landing .landing-lang-badge--new {
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--v2-cyan);
+}
+
+.polycode-landing .landing-lang-badge--popular {
+  background: rgba(124, 58, 237, 0.12);
+  color: #a78bfa;
+}
+
+@media (max-width: 900px) {
+  .polycode-landing .landing-lang-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .polycode-landing .landing-lang-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .polycode-landing .landing-lang-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================================
+     HOW IT WORKS — connected horizontal flow
+     ============================================================ */
+
+.polycode-landing .landing-flow-container {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.polycode-landing .landing-flow-card {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--v2-bg2);
+  border: 1px solid var(--v2-border);
+  border-radius: 14px;
+  padding: 1.75rem 1.4rem;
+  text-align: left;
+}
+
+.polycode-landing .landing-flow-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--v2-cyan-dim);
+  border: 1px solid var(--v2-cyan-border);
+  color: var(--v2-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.polycode-landing .landing-flow-num {
+  position: absolute;
+  top: 1.4rem;
+  right: 1.4rem;
+  font-family: var(--v2-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--v2-txt2);
+  letter-spacing: 0.04em;
+}
+
+.polycode-landing .landing-flow-card h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--v2-txt0);
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5rem;
+}
+
+.polycode-landing .landing-flow-card p {
+  font-size: 0.82rem;
+  color: var(--v2-txt1);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.polycode-landing .landing-flow-connector {
+  flex: 0 0 auto;
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--v2-cyan);
+  opacity: 0.6;
+  transform-origin: left center;
+}
+
+.polycode-landing .landing-flow-connector svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 900px) {
+  .polycode-landing .landing-flow-container {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .polycode-landing .landing-flow-connector {
+    width: auto;
+    height: 20px;
+    transform: rotate(90deg);
+  }
+}
+
+/* ============================================================
+     HERO RESPONSIVE
+     ============================================================ */
+
+@media (max-width: 900px) {
+  .polycode-landing .landing-hero-grid-v2 {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding-top: 5.5rem;
+  }
+  .polycode-landing .landing-hero-visual {
+    display: none;
+  }
+}
+/* ==========================================
+   POLYCODE - STATS SECTION
+========================================== */
+
+.landing-stats {
+  position: relative;
+  padding: 5rem 0;
+}
+
+.landing-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.landing-stat-card {
+  position: relative;
+  overflow: hidden;
+
+  padding: 2rem;
+
+  border-radius: 20px;
+
+  background: rgba(255, 255, 255, 0.03);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  backdrop-filter: blur(12px);
+
+  text-align: center;
+
+  transition:
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.landing-stat-card::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 1px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 242, 255, 0.4),
+    transparent
+  );
+}
+
+.landing-stat-card:hover {
+  transform: translateY(-6px);
+
+  border-color: rgba(0, 242, 255, 0.25);
+
+  background: rgba(255, 255, 255, 0.05);
+
+  box-shadow:
+    0 10px 30px rgba(0, 242, 255, 0.08),
+    0 0 0 1px rgba(0, 242, 255, 0.05);
+}
+
+.landing-stat-card h3 {
+  margin: 0;
+
+  font-size: 2.8rem;
+
+  font-weight: 800;
+
+  line-height: 1;
+
+  letter-spacing: -0.04em;
+
+  color: #ffffff;
+}
+
+.landing-stat-card p {
+  margin-top: 0.9rem;
+
+  color: #94a3b8;
+
+  font-size: 0.95rem;
+
+  font-weight: 500;
+
+  line-height: 1.5;
+}
+
+/* ==========================
+   TABLET
+========================== */
+
+@media (max-width: 992px) {
+  .landing-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ==========================
+   MOBILE
+========================== */
+
+@media (max-width: 640px) {
+  .landing-stats {
+    padding: 4rem 0;
+  }
+
+  .landing-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .landing-stat-card {
+    padding: 1.5rem;
+  }
+
+  .landing-stat-card h3 {
+    font-size: 2.2rem;
+  }
+
+  .landing-stat-card p {
+    font-size: 0.9rem;
+  }
+}
+
+
+================================================================================
+END OF FOLDER: landing
+================================================================================

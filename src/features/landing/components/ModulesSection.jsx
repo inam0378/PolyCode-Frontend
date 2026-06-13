@@ -7,15 +7,16 @@ const MODULES = [
   {
     id: "polym_mentor",
     icon: Bot,
+    image: "/images/assistnat2.png",
     name: "PolyMentor",
-    tagline: "AI Coding Assistant",
+    tagline: "Your Personal AI Mentor",
     description:
-      "Your intelligent programming mentor. Debug code, understand errors, learn best practices, and get step-by-step guidance.",
+      "Get instant explanations, debugging help, coding guidance, and personalized learning support whenever you need it.",
     features: [
-      "Answers programming questions",
-      "Explains errors & exceptions",
-      "Suggests optimized solutions",
-      "Improves from user feedback",
+      "AI coding guidance",
+      "Error explanations",
+      "Code optimization",
+      "Personalized learning",
     ],
     cardClass: "landing-module-card--indigo",
     iconClass: "landing-module-icon--indigo",
@@ -24,15 +25,16 @@ const MODULES = [
   {
     id: "polycode-website",
     icon: BookOpen,
-    name: "PolyCode Website",
-    tagline: "Learning Platform",
+    image: "images/courses.png",
+    name: "Interactive Learning",
+    tagline: "Courses & Challenges",
     description:
-      "The main educational hub with courses, video lectures, exercises, progress tracking, and AI-powered chat.",
+      "Master programming through structured courses, hands-on exercises, coding challenges, and progress tracking.",
     features: [
-      "Course management system",
-      "Video lectures & tutorials",
-      "Programming exercises",
-      "Student progress tracking",
+      "Interactive courses",
+      "Coding exercises",
+      "Progress tracking",
+      "Video tutorials",
     ],
     cardClass: "landing-module-card--violet",
     iconClass: "landing-module-icon--violet",
@@ -41,15 +43,16 @@ const MODULES = [
   {
     id: "polyguard",
     icon: Shield,
+    image: "/images/polyguard.png",
     name: "PolyGuard",
-    tagline: "Security Analyzer",
+    tagline: "AI Security Review",
     description:
-      "AI/ML-based code security analysis that detects vulnerabilities, scores risk, and suggests improvements.",
+      "Analyze code for vulnerabilities, receive security insights, and improve software quality before deployment.",
     features: [
       "Vulnerability detection",
       "Security scoring",
-      "Unsafe practice alerts",
-      "Risk assessment reports",
+      "Risk analysis",
+      "Improvement suggestions",
     ],
     cardClass: "landing-module-card--cyan",
     iconClass: "landing-module-icon--cyan",
@@ -66,32 +69,51 @@ export default function ModulesSection() {
     <section id="modules" ref={ref} className="landing-section">
       <div className="landing-container">
         <motion.div
+          className="landing-modules-header"
           initial={reduceMotion ? {} : { opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
         >
-          <p className="landing-section-label">Three pillars</p>
-          <h2>One ecosystem for learning and security</h2>
-          <p className="landing-section-desc">
-            PolyCode brings together mentorship, structured learning, and automated
-            security analysis in a single platform built for students and developers.
+          <p className="landing-sec-label">Complete Learning Ecosystem</p>
+
+          <h2 className="landing-sec-title">
+            Everything You Need To Become A Better Developer
+          </h2>
+
+          <p className="landing-sec-sub">
+            Learn programming through interactive courses, AI-powered mentoring,
+            coding challenges, and built-in security analysis.
           </p>
         </motion.div>
-
         <div className="landing-modules-grid">
           {MODULES.map((module, index) => {
             const Icon = module.icon;
+
             const cardContent = (
               <>
+                <div className="landing-module-image-wrap">
+                  <img
+                    src={module.image}
+                    alt={module.name}
+                    className="landing-module-image"
+                  />
+                </div>
+
                 <div className={`landing-module-icon ${module.iconClass}`}>
                   <Icon size={24} aria-hidden />
                 </div>
+
                 <p className="landing-module-tagline">{module.tagline}</p>
+
                 <h3>{module.name}</h3>
+
                 <p>{module.description}</p>
+
                 <ul className="landing-module-features">
                   {module.features.map((feature) => (
-                    <li key={feature}>{feature}</li>
+                    <li key={feature} className="landing-feature-pill">
+                      {feature}
+                    </li>
                   ))}
                 </ul>
               </>
@@ -104,13 +126,15 @@ export default function ModulesSection() {
                   className={`landing-module-card ${module.cardClass}`}
                   initial={reduceMotion ? {} : { opacity: 0, y: 30 }}
                   animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.55, delay: index * 0.15 }}
+                  transition={{
+                    duration: 0.55,
+                    delay: index * 0.15,
+                  }}
                 >
                   {cardContent}
+
                   <div style={{ marginTop: "1.25rem" }}>
-                    <OpenAssistantButton className="landing-btn-indigo">
-                      Talk to PolyMentor
-                    </OpenAssistantButton>
+                    <div className="landing-module-action"></div>
                   </div>
                 </motion.article>
               );
@@ -124,7 +148,10 @@ export default function ModulesSection() {
                   className={`landing-module-card landing-module-card--clickable ${module.cardClass}`}
                   initial={reduceMotion ? {} : { opacity: 0, y: 30 }}
                   animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.55, delay: index * 0.15 }}
+                  transition={{
+                    duration: 0.55,
+                    delay: index * 0.15,
+                  }}
                 >
                   {cardContent}
                 </motion.a>
@@ -137,7 +164,10 @@ export default function ModulesSection() {
                 className={`landing-module-card ${module.cardClass}`}
                 initial={reduceMotion ? {} : { opacity: 0, y: 30 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.55, delay: index * 0.15 }}
+                transition={{
+                  duration: 0.55,
+                  delay: index * 0.15,
+                }}
               >
                 {cardContent}
               </motion.article>
