@@ -98,7 +98,6 @@ export default function LanguagePickerSection({
 }) {
   const [languages, setLanguages] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [hoveredLanguage, setHoveredLanguage] = useState(null);
   const [selectedLanguage, setSelectedLanguage] = useState(null);
   const navigate = useNavigate();
 
