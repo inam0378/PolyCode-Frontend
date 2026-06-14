@@ -1,5 +1,4 @@
 import React from "react";
-import LanguagePickerSection from "./LanguagePickerSection";
 import { motion, useReducedMotion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 
