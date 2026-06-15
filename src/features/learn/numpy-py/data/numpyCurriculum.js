@@ -2442,31 +2442,89 @@ print(x)`,
           {
             type: "text",
             content:
-              "**Reductions** collapse many values into one — perfect for **weather data** summaries. NumPy arrays expose `.sum()`, `.mean()`, `.min()`, and `.max()` as fast, one-liner stats.",
+              "You have a week of **test scores** — maybe 80, 90, 70, and 100. NumPy can answer four common questions in **one line each**: What is the **total**? What is the **average**? What was the **best** score? What was the **lowest**?",
+            code: {
+              lang: "python",
+              label: "Four quick questions, four quick answers",
+              content: `import numpy as np
+
+scores = np.array([80, 90, 70, 100])
+
+print(scores.sum())    # 340 — add them all up
+print(scores.mean())   # 85.0 — the average
+print(scores.max())    # 100 — highest score
+print(scores.min())    # 70 — lowest score`,
+            },
           },
           {
-            type: "code",
-            lang: "python",
-            label: "Daily temperature stats",
-            content: `import numpy as np
+            type: "text",
+            content:
+              "Think of these as **shortcut buttons** on a calculator. Instead of writing a loop, you put a dot and the name: `.sum()`, `.mean()`, `.max()`, `.min()`. They work on **any** NumPy array of numbers.",
+            code: {
+              lang: "python",
+              label: "Same idea with daily steps",
+              content: `import numpy as np
 
-temps = np.array([72, 68, 75, 80, 65])
-print(temps.sum())    # 360
-print(temps.mean())   # 72.0
-print(temps.max())    # 80`,
+steps = np.array([4000, 5200, 6100, 4800])
+
+print(steps.sum())     # 20,100 steps total this week
+print(steps.mean())    # 5,025 steps per day on average`,
+            },
+          },
+          {
+            type: "diagram",
+            title: "What each button does",
+            nodes: [
+              {
+                id: "sum",
+                label: ".sum()",
+                color: "#f43f5e",
+                items: [
+                  "Add every number",
+                  "Like a receipt total",
+                  "[80,90,70,100] → 340",
+                ],
+              },
+              {
+                id: "mean",
+                label: ".mean()",
+                color: "#ec4899",
+                items: [
+                  "The average",
+                  "Total ÷ how many",
+                  "[80,90,70,100] → 85",
+                ],
+              },
+              {
+                id: "minmax",
+                label: ".min() / .max()",
+                color: "#db2777",
+                items: [
+                  "Smallest or biggest",
+                  "Worst day / best day",
+                  "Useful for highs & lows",
+                ],
+              },
+            ],
           },
           {
             type: "callout",
             variant: "tip",
             content:
-              "You can also call `np.mean(temps)` — method vs function, same result.",
+              "You can also write `np.mean(scores)` instead of `scores.mean()` — both work. The dot version (`scores.mean()`) is very common in notebooks and courses.",
+          },
+          {
+            type: "callout",
+            variant: "info",
+            content:
+              "**`.mean()`** = add everything, then divide by how many numbers you have. Four scores? Divide the total by 4.",
           },
           {
             type: "quiz",
-            question: "Which method returns the arithmetic average?",
-            options: [".sum()", ".mean()", ".max()", ".std()"],
+            question: "You have scores [10, 20, 30]. What does .mean() return?",
+            options: ["60", "20", "30", "10"],
             answer: 1,
-            explanation: ".mean() computes the average of all elements.",
+            explanation: "Mean = (10+20+30) ÷ 3 = 60 ÷ 3 = 20.",
           },
         ],
         challenge: {
@@ -2503,42 +2561,109 @@ print(scores.mean())`,
           {
             type: "text",
             content:
-              "In a 2D grid, **`axis=0`** collapses **down columns** (think: sum each column). **`axis=1`** collapses **across rows** (sum each row). Imagine a scoreboard: axis=0 totals per round, axis=1 totals per player.",
+              "A **2D array** is like a small **spreadsheet** — rows go **sideways**, columns go **down**. When you `.sum()` the whole thing, you get **one number**. But often you want **one answer per row** or **one answer per column**. That is what **`axis`** is for.",
+          },
+          {
+            type: "text",
+            content:
+              "**Real example:** two students, three quiz scores each. You might ask: *How did each student do overall?* (sum **each row**) or *What was the class average on Quiz 1?* (sum **each column**).",
+            code: {
+              lang: "python",
+              label: "A 2×3 grade table",
+              content: `import numpy as np
+
+# rows = students, columns = Quiz 1, 2, 3
+grades = np.array([[80, 90, 70],   # Student A
+                   [60, 75, 85]])  # Student B
+print(grades)`,
+            },
+          },
+          {
+            type: "table",
+            title: "Student quiz scores — read the table first",
+            columns: ["Quiz 1", "Quiz 2", "Quiz 3"],
+            rows: [
+              { label: "Student A", values: [80, 90, 70] },
+              { label: "Student B", values: [60, 75, 85] },
+            ],
+            rowTotals: [240, 220],
+            colTotals: [140, 165, 155],
+            rowTotalLabel: "axis=1 → total per student (each row)",
+            colTotalLabel: "axis=0 ↓ total per quiz (each column)",
+          },
+          {
+            type: "text",
+            content:
+              "**`axis=1`** → go **across each row** (left to right). You get **one answer per row**. Use this when you care about **each student** or **each food truck** or **each person**.",
+            code: {
+              lang: "python",
+              label: "Sum each row — one total per student",
+              content: `import numpy as np
+
+grades = np.array([[80, 90, 70],
+                   [60, 75, 85]])
+
+print(grades.sum(axis=1))   # [240, 220]
+# Student A: 80+90+70 = 240
+# Student B: 60+75+85 = 220`,
+            },
+          },
+          {
+            type: "text",
+            content:
+              "**`axis=0`** → go **down each column** (top to bottom). You get **one answer per column**. Use this when you care about **each quiz**, **each day of the week**, or **each subject**.",
+            code: {
+              lang: "python",
+              label: "Sum each column — one total per quiz",
+              content: `import numpy as np
+
+grades = np.array([[80, 90, 70],
+                   [60, 75, 85]])
+
+print(grades.sum(axis=0))   # [140, 165, 155]
+# Quiz 1: 80+60 = 140
+# Quiz 2: 90+75 = 165
+# Quiz 3: 70+85 = 155`,
+            },
           },
           {
             type: "diagram",
-            title: "Axis direction",
+            title: "Remember axis with arrows",
             nodes: [
               {
                 id: "axis0",
-                label: "axis=0 ↓",
+                label: "axis=0 ↓ down columns",
                 color: "#f43f5e",
-                items: ["Collapse rows", "One result per column"],
+                items: [
+                  "One result per column",
+                  "“How was Quiz 1 for everyone?”",
+                  "grades.sum(axis=0)",
+                ],
               },
               {
                 id: "axis1",
-                label: "axis=1 →",
+                label: "axis=1 → across rows",
                 color: "#ec4899",
-                items: ["Collapse columns", "One result per row"],
+                items: [
+                  "One result per row",
+                  "“How did Student A do overall?”",
+                  "grades.sum(axis=1)",
+                ],
               },
             ],
           },
           {
-            type: "code",
-            lang: "python",
-            label: "Column vs row sums",
-            content: `import numpy as np
-
-m = np.array([[1, 2, 3], [4, 5, 6]])
-print(m.sum(axis=0))  # [5 7 9] — column totals
-print(m.sum(axis=1))  # [ 6 15] — row totals`,
+            type: "callout",
+            variant: "tip",
+            content:
+              "**Memory trick:** `axis=1` has a **1** in it — think **one total per row** (rows are the “1st” direction when you read left-to-right). `axis=0` collapses **down** the columns.",
           },
           {
             type: "quiz",
-            question: "To sum each row of a 2D array, use axis=?",
-            options: ["0", "1", "-1 only", "None"],
+            question: "You want each student's total score. Which axis?",
+            options: ["axis=0", "axis=1", "no axis", "axis=2"],
             answer: 1,
-            explanation: "axis=1 operates across columns within each row.",
+            explanation: "axis=1 sums across each row — one total per student.",
           },
         ],
         challenge: {
@@ -2582,40 +2707,92 @@ print(m.sum(axis=1))`,
           {
             type: "text",
             content:
-              "Real **weather data** has gaps — missing sensors show up as **NaN** (Not a Number). Use **`np.nanmean`**, **`np.nansum`**, etc. to ignore them. **Percentiles** tell you thresholds: the 90th percentile is hotter than 90% of readings.",
+              "Real data is messy. A weather sensor might **miss a reading**. In NumPy, a missing value shows up as **`NaN`** (Not a Number). If you use normal `.mean()` on data with NaN, the answer becomes **NaN** too — not helpful!",
+            code: {
+              lang: "python",
+              label: "Missing reading breaks normal .mean()",
+              content: `import numpy as np
+
+temps = np.array([72, np.nan, 68, 75])
+print(temps.mean())      # nan — whole answer ruined!
+print(np.nanmean(temps)) # 71.666... — skips the gap`,
+            },
           },
           {
-            type: "code",
-            lang: "python",
-            label: "Ignore NaN in stats",
-            content: `import numpy as np
+            type: "text",
+            content:
+              "Use **`np.nanmean`**, **`np.nansum`**, **`np.nanmax`**, and similar **`nan*`** functions when your data has holes. They **ignore NaN** and calculate from the numbers that are still there — like averaging test scores when one student was absent.",
+            code: {
+              lang: "python",
+              label: "Check which values are missing",
+              content: `import numpy as np
 
 temps = np.array([72, np.nan, 68, 75, np.nan])
-print(np.nanmean(temps))  # 71.666...
-print(np.isnan(temps))    # [False  True False False  True]`,
+
+print(np.isnan(temps))
+# [False  True False False  True]
+# True = this spot is missing`,
+            },
           },
           {
-            type: "code",
-            lang: "python",
-            label: "Percentiles",
-            content: `import numpy as np
+            type: "diagram",
+            title: "NaN vs normal mean",
+            nodes: [
+              {
+                id: "normal",
+                label: ".mean() — strict",
+                color: "#f43f5e",
+                items: [
+                  "One NaN ruins everything",
+                  "Answer becomes nan",
+                  "Use only when data is complete",
+                ],
+              },
+              {
+                id: "nanmean",
+                label: "np.nanmean() — forgiving",
+                color: "#ec4899",
+                items: [
+                  "Skips missing values",
+                  "Uses the rest",
+                  "Best for real-world data",
+                ],
+              },
+            ],
+          },
+          {
+            type: "text",
+            content:
+              "A **percentile** answers: *“What score is higher than X% of the rest?”* The **50th percentile** is the **middle** value (the median). The **90th percentile** means only 10% of values are above it — like “top 10% hottest days.”",
+            code: {
+              lang: "python",
+              label: "Percentiles on test scores",
+              content: `import numpy as np
 
 scores = np.array([55, 70, 85, 90, 100])
-print(np.percentile(scores, 50))   # median → 85.0
-print(np.percentile(scores, 90))   # 90th pct → 97.0`,
+
+print(np.percentile(scores, 50))   # 85.0 — middle score
+print(np.percentile(scores, 90))   # 97.0 — beat 90% of class`,
+            },
           },
           {
             type: "callout",
             variant: "info",
             content:
-              "Regular `.mean()` on NaN data returns NaN. Always reach for `nan*` functions when data has holes.",
+              "**When to use what:** complete data → `.mean()`. Missing values → `np.nanmean()`. “Where do most scores sit?” or “What’s the top 10%?” → `np.percentile()`.",
+          },
+          {
+            type: "callout",
+            variant: "tip",
+            content:
+              "Think of **percentile** as a **ranking line**. 90th percentile = “better than 90% of everyone else.” Weather apps use this for “unusually hot day” alerts.",
           },
           {
             type: "quiz",
-            question: "Which function computes mean ignoring NaN?",
-            options: ["np.mean", "np.nanmean", "np.average", "np.median only"],
+            question: "Data has missing values. Safest average?",
+            options: ["scores.mean()", "np.nanmean(scores)", "np.sum(scores)", "len(scores)"],
             answer: 1,
-            explanation: "np.nanmean skips NaN values automatically.",
+            explanation: "np.nanmean skips NaN values and averages the rest.",
           },
         ],
         challenge: {
