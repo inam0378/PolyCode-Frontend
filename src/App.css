@@ -7701,6 +7701,116 @@ body {
   flex-shrink: 0;
 }
 
+.numpy-vt-footnote {
+  margin: 12px 0 0;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: #9aa3b8;
+}
+
+.numpy-vt-row-highlight .numpy-vt-row-head,
+.numpy-vt-row-highlight .numpy-vt-cell {
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.numpy-array-visual-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.numpy-array-row-block {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  width: 100%;
+}
+
+.numpy-array-row-compact {
+  width: 100%;
+}
+
+.numpy-array-compact-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.numpy-array-value-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.numpy-array-compact-row .numpy-array-row-label {
+  flex-shrink: 0;
+  min-width: 108px;
+  text-align: left;
+}
+
+.numpy-array-col-labels,
+.numpy-array-data-row {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.numpy-array-col-labels {
+  margin-bottom: 8px;
+}
+
+.numpy-array-corner {
+  display: block;
+}
+
+.numpy-array-col-label,
+.numpy-array-row-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8b93a8;
+  text-align: center;
+}
+
+.numpy-array-row-label {
+  text-align: right;
+  padding-right: 4px;
+  white-space: nowrap;
+}
+
+.numpy-array-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 72px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: "Space Mono", "Consolas", monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.numpy-array-cell-missing {
+  font-weight: 700;
+}
+
+.numpy-array-footnote {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: #9aa3b8;
+}
+
 .numpy-matrix-op-wrap {
   margin-top: 4px;
 }

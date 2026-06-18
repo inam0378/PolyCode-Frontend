@@ -2707,55 +2707,88 @@ print(m.sum(axis=1))`,
           {
             type: "text",
             content:
-              "Real data is messy. A weather sensor might **miss a reading**. In NumPy, a missing value shows up as **`NaN`** (Not a Number). If you use normal `.mean()` on data with NaN, the answer becomes **NaN** too — not helpful!",
-            code: {
-              lang: "python",
-              label: "Missing reading breaks normal .mean()",
-              content: `import numpy as np
-
-temps = np.array([72, np.nan, 68, 75])
-print(temps.mean())      # nan — whole answer ruined!
-print(np.nanmean(temps)) # 71.666... — skips the gap`,
-            },
+              "Sometimes data has **gaps**. A weather sensor stops working. A student misses a test. A survey question is left blank. In NumPy, a missing value is written as **`NaN`** — it simply means *we don't know this number*.",
+          },
+          {
+            type: "array",
+            title: "Daily steps — one day is missing",
+            label: "steps",
+            values: [8000, 7500, "NaN", 9000],
+            colLabels: ["Mon", "Tue", "Wed", "Thu"],
+            missingIndexes: [2],
+            accentColor: "#6366f1",
+            missingAccent: "#f43f5e",
+            footnote:
+              "Wednesday is **NaN** (highlighted red). You still have Mon, Tue, Thu — but normal `.mean()` gives up on the whole array.",
+          },
+          {
+            type: "array",
+            title: "Same data — two different averages",
+            rows: [
+              {
+                label: ".mean()",
+                values: ["nan"],
+                colLabels: ["result"],
+                missingIndexes: [0],
+              },
+              {
+                label: "np.nanmean()",
+                values: ["8166.67"],
+                colLabels: ["result"],
+                okIndexes: [0],
+              },
+            ],
+            footnote:
+              "`.mean()` → **nan** (one gap breaks it). `np.nanmean()` → **8166.67** (average of 8000, 7500, 9000 only).",
           },
           {
             type: "text",
             content:
-              "Use **`np.nanmean`**, **`np.nansum`**, **`np.nanmax`**, and similar **`nan*`** functions when your data has holes. They **ignore NaN** and calculate from the numbers that are still there — like averaging test scores when one student was absent.",
+              "**Fix missing data** with **`nan*`** functions. Use **`np.isnan`** to see which spots are empty.",
             code: {
               lang: "python",
-              label: "Check which values are missing",
+              label: "Missing value breaks normal .mean()",
               content: `import numpy as np
 
-temps = np.array([72, np.nan, 68, 75, np.nan])
+steps = np.array([8000, 7500, np.nan, 9000])
 
-print(np.isnan(temps))
-# [False  True False False  True]
-# True = this spot is missing`,
+print(steps.mean())      # nan
+print(np.nanmean(steps)) # 8166.67`,
             },
           },
           {
+            type: "array",
+            title: "np.isnan() — True means missing",
+            label: "missing?",
+            values: ["False", "False", "True", "False"],
+            colLabels: ["Mon", "Tue", "Wed", "Thu"],
+            missingIndexes: [2],
+            accentColor: "#6366f1",
+            missingAccent: "#f43f5e",
+            footnote: "**True** = that day has NaN. **False** = real number.",
+          },
+          {
             type: "diagram",
-            title: "NaN vs normal mean",
+            title: "Quick pick",
             nodes: [
               {
                 id: "normal",
-                label: ".mean() — strict",
+                label: ".mean()",
                 color: "#f43f5e",
                 items: [
-                  "One NaN ruins everything",
-                  "Answer becomes nan",
-                  "Use only when data is complete",
+                  "Every value must exist",
+                  "One NaN → whole answer is NaN",
+                  "Use when data is complete",
                 ],
               },
               {
                 id: "nanmean",
-                label: "np.nanmean() — forgiving",
-                color: "#ec4899",
+                label: "np.nanmean()",
+                color: "#22c55e",
                 items: [
                   "Skips missing values",
                   "Uses the rest",
-                  "Best for real-world data",
+                  "Use for real-world data",
                 ],
               },
             ],
@@ -2763,7 +2796,38 @@ print(np.isnan(temps))
           {
             type: "text",
             content:
-              "A **percentile** answers: *“What score is higher than X% of the rest?”* The **50th percentile** is the **middle** value (the median). The **90th percentile** means only 10% of values are above it — like “top 10% hottest days.”",
+              "A **percentile** shows **where a number ranks** in a group — like asking *\"How many people scored below this?\"*",
+          },
+          {
+            type: "table",
+            title: "Class test scores — who stands where?",
+            showTotals: false,
+            columns: ["Score", "Plain English"],
+            rows: [
+              { label: "Ali", values: [55, "Lowest in class"] },
+              { label: "Ben", values: [70, "Below middle"] },
+              { label: "Cara", values: [85, "Middle — 50th percentile"] },
+              { label: "Dan", values: [90, "Above most students"] },
+              { label: "Eve", values: [100, "Highest in class"] },
+            ],
+            highlightRows: [2],
+            footnote:
+              "Highlighted row = **50th percentile** (middle). **90th percentile** ≈ 97 — the score line where only 10% scored higher.",
+          },
+          {
+            type: "array",
+            title: "Same scores as a NumPy array",
+            label: "scores",
+            values: [55, 70, 85, 90, 100],
+            colLabels: ["low →", "", "middle", "", "→ high"],
+            accentColor: "#22c55e",
+            footnote:
+              "Sorted lowest to highest. `np.percentile(scores, 50)` → **85**. `np.percentile(scores, 90)` → **97**.",
+          },
+          {
+            type: "text",
+            content:
+              "**Real-life uses:** salary reports (90th percentile pay), child growth charts (height vs age), weather alerts (95th percentile = unusually hot day).",
             code: {
               lang: "python",
               label: "Percentiles on test scores",
@@ -2771,21 +2835,15 @@ print(np.isnan(temps))
 
 scores = np.array([55, 70, 85, 90, 100])
 
-print(np.percentile(scores, 50))   # 85.0 — middle score
-print(np.percentile(scores, 90))   # 97.0 — beat 90% of class`,
+print(np.percentile(scores, 50))   # 85.0 — middle
+print(np.percentile(scores, 90))   # 97.0 — top 10% line`,
             },
           },
           {
             type: "callout",
             variant: "info",
             content:
-              "**When to use what:** complete data → `.mean()`. Missing values → `np.nanmean()`. “Where do most scores sit?” or “What’s the top 10%?” → `np.percentile()`.",
-          },
-          {
-            type: "callout",
-            variant: "tip",
-            content:
-              "Think of **percentile** as a **ranking line**. 90th percentile = “better than 90% of everyone else.” Weather apps use this for “unusually hot day” alerts.",
+              "**Cheat sheet:** All values present → `.mean()`. Some missing → `np.nanmean()`. Need a ranking or cutoff line → `np.percentile()`.",
           },
           {
             type: "quiz",
