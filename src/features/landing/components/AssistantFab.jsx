@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ChevronRight,
@@ -272,6 +273,8 @@ function getPendingFeedbackMessage(messages) {
 export default function AssistantFab() {
   const { user } = useAuth();
   const { context: assistantContext } = useAssistant();
+  const { pathname } = useLocation();
+  const compactDock = pathname !== "/select-language";
   const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState(() => loadSession());
@@ -346,11 +349,17 @@ export default function AssistantFab() {
   useEffect(() => {
     if (!open) return;
 
+    const scrollNode = messagesScrollRef.current;
+    if (!scrollNode) return;
+
+    const distanceFromBottom =
+      scrollNode.scrollHeight - scrollNode.scrollTop - scrollNode.clientHeight;
+    const shouldStickToBottom = sending || distanceFromBottom < 96;
+
+    if (!shouldStickToBottom) return;
+
     window.requestAnimationFrame(() => {
-      const scrollNode = messagesScrollRef.current;
-      if (scrollNode) {
-        scrollNode.scrollTop = scrollNode.scrollHeight;
-      }
+      scrollNode.scrollTop = scrollNode.scrollHeight;
     });
   }, [session.messages, open, sending]);
 
@@ -569,7 +578,7 @@ export default function AssistantFab() {
     msg.id === "welcome" ? getWelcomeMessage(assistantContext) : msg.content;
 
   const handleDockPointerDown = (event) => {
-    if (event.button !== 0) return;
+    if (compactDock || event.button !== 0) return;
     event.preventDefault();
 
     const rect = dockRef.current?.getBoundingClientRect();
@@ -842,7 +851,9 @@ export default function AssistantFab() {
           ref={dockRef}
           role="button"
           tabIndex={0}
-          className={`assistant-dock-btn polym_mentor-dock${draggingDock ? " assistant-dock-btn--dragging" : ""}`}
+          className={`assistant-dock-btn polym_mentor-dock${
+            compactDock ? " assistant-dock-btn--compact" : ""
+          }${draggingDock ? " assistant-dock-btn--dragging" : ""}`}
           onPointerDown={handleDockPointerDown}
           onPointerMove={handleDockPointerMove}
           onPointerUp={handleDockPointerUp}
@@ -855,11 +866,11 @@ export default function AssistantFab() {
             }
           }}
           aria-label={`Open ${ASSISTANT_CONFIG.name}`}
-          initial={reduceMotion ? {} : { x: 40, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.5, type: "spring", stiffness: 260, damping: 24 }}
+          initial={reduceMotion ? false : { opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.35, type: "spring", stiffness: 320, damping: 26 }}
           style={
-            dockPosition
+            !compactDock && dockPosition
               ? {
                   left: dockPosition.x,
                   top: dockPosition.y,
@@ -870,17 +881,21 @@ export default function AssistantFab() {
           }
         >
           <div aria-hidden="true" className="assistant-dock-inner">
-            <AssistantAvatar size="lg" alt={ASSISTANT_CONFIG.name} />
-            <span className="assistant-dock-copy">
-              <span className="assistant-dock-title">
-                <Zap size={12} />
-                {ASSISTANT_CONFIG.name}
-              </span>
-              <span className="assistant-dock-hint">Tap to open mentor</span>
-            </span>
-            <span className="assistant-dock-sparkle">
-              <Sparkles size={16} />
-            </span>
+            <AssistantAvatar size={compactDock ? "md" : "lg"} alt={ASSISTANT_CONFIG.name} />
+            {!compactDock ? (
+              <>
+                <span className="assistant-dock-copy">
+                  <span className="assistant-dock-title">
+                    <Zap size={12} />
+                    {ASSISTANT_CONFIG.name}
+                  </span>
+                  <span className="assistant-dock-hint">Tap to open mentor</span>
+                </span>
+                <span className="assistant-dock-sparkle">
+                  <Sparkles size={16} />
+                </span>
+              </>
+            ) : null}
           </div>
         </motion.div>
       ) : null}

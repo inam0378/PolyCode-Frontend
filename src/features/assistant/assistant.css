@@ -8,12 +8,23 @@
 }
 
 .polym_mentor-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  scrollbar-width: none;
   overscroll-behavior: contain;
 }
 
+.polym_mentor-scroll:hover,
+.polym_mentor-scroll:focus-within {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
 .polym_mentor-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.polym_mentor-scroll:hover::-webkit-scrollbar,
+.polym_mentor-scroll:focus-within::-webkit-scrollbar {
   width: 5px;
 }
 
@@ -65,18 +76,45 @@
   border-radius: 1rem 0 0 1rem;
   background: var(--assistant-dock-bg);
   padding: 0.5rem 1rem 0.5rem 0.5rem;
-  cursor: grab;
-  touch-action: none;
+  cursor: pointer;
+  touch-action: manipulation;
   user-select: none;
   backdrop-filter: blur(16px);
   box-shadow: var(--assistant-dock-shadow);
   color: var(--assistant-text);
   transition: border-color 0.2s, padding-left 0.3s, background 0.2s, box-shadow 0.2s;
+  transform-origin: bottom right;
+}
+
+.assistant-dock-btn--compact {
+  right: 1.25rem;
+  bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+  border-radius: 999px;
+  border-right: 1px solid var(--assistant-header-border, var(--border));
+  padding: 0.35rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.assistant-dock-btn--compact:hover {
+  padding: 0.35rem;
+  transform: translateY(-1px);
+  box-shadow: var(--assistant-dock-shadow), 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.assistant-dock-btn--compact .assistant-dock-inner {
+  gap: 0;
 }
 
 .assistant-dock-btn--dragging {
   cursor: grabbing;
+  touch-action: none;
   transition: none;
+}
+
+.assistant-dock-btn:not(.assistant-dock-btn--compact) {
+  cursor: grab;
+  touch-action: none;
 }
 
 .assistant-dock-btn:hover {
@@ -686,9 +724,14 @@
     max-width: 100vw;
   }
 
-  .assistant-dock-btn {
+  .assistant-dock-btn:not(.assistant-dock-btn--compact) {
     bottom: max(1rem, env(safe-area-inset-bottom, 0px));
     max-width: calc(100vw - 12px);
+  }
+
+  .assistant-dock-btn--compact {
+    right: max(1rem, env(safe-area-inset-right, 0px));
+    bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   }
 
   .assistant-dock-hint {

@@ -21,23 +21,44 @@ export default function CoursesSlider() {
 
   /* ── scroll helpers ── */
   const scrollTo = useCallback(
-    (index) => {
+    (index, instant = false) => {
       if (!trackRef.current) return;
       const clamped = Math.max(0, Math.min(index, total - 1));
-      trackRef.current.scrollTo({
-        left: clamped * (CARD_WIDTH + GAP),
-        behavior: "smooth",
-      });
+      const track = trackRef.current;
+      const firstCard = track.querySelector(".cs-card");
+      const step = firstCard ? firstCard.offsetWidth + GAP : CARD_WIDTH + GAP;
+
+      if (instant) {
+        track.style.scrollSnapType = "none";
+        track.scrollTo({ left: clamped * step, behavior: "auto" });
+        setActiveIndex(clamped);
+        requestAnimationFrame(() => {
+          track.style.scrollSnapType = "";
+        });
+        return;
+      }
+
+      track.scrollTo({ left: clamped * step, behavior: "smooth" });
       setActiveIndex(clamped);
     },
     [total],
   );
 
-  const prev = () => scrollTo(activeIndex === 0 ? total - 1 : activeIndex - 1);
-  const next = useCallback(
-    () => scrollTo(activeIndex === total - 1 ? 0 : activeIndex + 1),
-    [activeIndex, scrollTo, total],
-  );
+  const prev = () => {
+    if (activeIndex === 0) {
+      scrollTo(total - 1, true);
+    } else {
+      scrollTo(activeIndex - 1);
+    }
+  };
+
+  const next = useCallback(() => {
+    if (activeIndex === total - 1) {
+      scrollTo(0, true);
+    } else {
+      scrollTo(activeIndex + 1);
+    }
+  }, [activeIndex, scrollTo, total]);
 
   /* ── auto-scroll ── */
   useEffect(() => {
@@ -51,12 +72,14 @@ export default function CoursesSlider() {
     const track = trackRef.current;
     if (!track) return;
     const onScroll = () => {
-      const index = Math.round(track.scrollLeft / (CARD_WIDTH + GAP));
-      setActiveIndex(index);
+      const firstCard = track.querySelector(".cs-card");
+      const step = firstCard ? firstCard.offsetWidth + GAP : CARD_WIDTH + GAP;
+      const index = Math.round(track.scrollLeft / step);
+      setActiveIndex(Math.max(0, Math.min(index, total - 1)));
     };
     track.addEventListener("scroll", onScroll, { passive: true });
     return () => track.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [total]);
 
   return (
     <section
